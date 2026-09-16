@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import ErrorAlert from "../components/ErrorAlert.jsx";
 
 export default function LoginPage() {
   const { user, login, register } = useAuth();
@@ -83,11 +84,7 @@ export default function LoginPage() {
             Mínimo de 8 caracteres, não pode ser só números nem uma senha comum.
           </p>
         )}
-        {error && (
-          <p className="error-box" role="alert">
-            {error}
-          </p>
-        )}
+        <ErrorAlert>{error}</ErrorAlert>
         <button type="submit" className="button" disabled={submitting}>
           {submitting ? "Aguarde…" : isLogin ? "Entrar" : "Criar conta"}
         </button>

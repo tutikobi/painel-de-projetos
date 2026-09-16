@@ -1,137 +1,71 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { api } from "../api/client.js";
+import { PENDING_FILTER } from "../constants/tasks.js";
 import { useProjects } from "../context/ProjectsContext.jsx";
+import { useTasks } from "../hooks/useTasks.js";
+import { groupPendingTasks } from "../utils/tasks.js";
+import ErrorAlert from "../components/ErrorAlert.jsx";
 import TaskBreakdownModal from "../components/TaskBreakdownModal.jsx";
-import TaskEditor from "../components/TaskEditor.jsx";
 import TaskForm from "../components/TaskForm.jsx";
-import TaskMeta from "../components/TaskMeta.jsx";
+import TaskRow from "../components/TaskRow.jsx";
+import TaskSection from "../components/TaskSection.jsx";
 
-const PENDING = { status: "todo,doing" };
-
-// Visão central de pendências (spec H2).
+// Visão central de pendências (spec H2). Uma única chamada de listagem,
+// independente de quantos projetos existem.
 export default function CentralView() {
   const { projects, refreshProjects } = useProjects();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [editingId, setEditingId] = useState(null);
+  const {
+    tasks,
+    loading,
+    error,
+    setError,
+    reload,
+    removeLocally,
+    updateTask,
+    deleteTask,
+  } = useTasks(PENDING_FILTER);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const { overdue, upcoming, noDate } = groupPendingTasks(tasks);
 
-  // Uma única chamada, independente de quantos projetos existem.
-  const loadTasks = useCallback(async () => {
-    try {
-      setTasks(await api.listTasks(PENDING));
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+  function refreshAll() {
+    reload();
+    refreshProjects();
+  }
 
   async function complete(task) {
-    setTasks((current) => current.filter((t) => t.id !== task.id));
+    removeLocally(task.id);
     try {
       await api.updateTask(task.id, { status: "done" });
     } catch (err) {
+      await reload(); // devolve a tarefa à lista antes de mostrar o erro
       setError(`Não foi possível concluir a tarefa: ${err.message}`);
-      loadTasks();
     }
   }
 
   async function save(task, changes) {
-    await api.updateTask(task.id, changes);
-    setEditingId(null);
-    await Promise.all([loadTasks(), refreshProjects()]);
+    await updateTask(task.id, changes);
+    refreshAll(); // prazo ou projeto podem mudar a seção e a ordem
   }
 
   async function remove(task) {
     if (!window.confirm(`Excluir a tarefa "${task.title}"?`)) return;
     try {
-      await api.deleteTask(task.id);
-      setTasks((current) => current.filter((t) => t.id !== task.id));
+      await deleteTask(task.id);
       refreshProjects();
     } catch (err) {
       setError(`Não foi possível excluir a tarefa: ${err.message}`);
     }
   }
 
-  function afterChange() {
-    loadTasks();
-    refreshProjects();
-  }
-
-  const overdue = tasks.filter((t) => t.due_date && t.is_overdue);
-  const upcoming = tasks.filter((t) => t.due_date && !t.is_overdue);
-  const noDate = tasks.filter((t) => !t.due_date);
-
-  const renderList = (list) => (
-    <ul className="task-list">
-      {list.map((task) => (
-        <li
-          key={task.id}
-          className={task.is_overdue ? "task-row overdue" : "task-row"}
-        >
-          {editingId === task.id ? (
-            <TaskEditor
-              task={task}
-              projects={projects}
-              onSave={(changes) => save(task, changes)}
-              onCancel={() => setEditingId(null)}
-            />
-          ) : (
-            <>
-              <input
-                type="checkbox"
-                aria-label={`Concluir "${task.title}"`}
-                onChange={() => complete(task)}
-              />
-              <div className="task-main">
-                <span className="task-title">{task.title}</span>
-                <span className="task-sub">
-                  <Link
-                    to={`/projects/${task.project}`}
-                    className="project-tag"
-                  >
-                    <span
-                      className="color-dot"
-                      style={{ background: task.project_color }}
-                      aria-hidden="true"
-                    />
-                    {task.project_name}
-                  </Link>
-                  {task.status === "doing" && (
-                    <span className="badge">Em andamento</span>
-                  )}
-                  <TaskMeta task={task} />
-                </span>
-              </div>
-              <div className="task-actions">
-                <button
-                  type="button"
-                  className="button-link"
-                  onClick={() => setEditingId(task.id)}
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  className="button-link danger"
-                  onClick={() => remove(task)}
-                >
-                  Excluir
-                </button>
-              </div>
-            </>
-          )}
-        </li>
-      ))}
-    </ul>
+  const renderRow = (task) => (
+    <TaskRow
+      key={task.id}
+      task={task}
+      projects={projects}
+      onComplete={complete}
+      onSave={save}
+      onDelete={remove}
+    />
   );
 
   return (
@@ -160,44 +94,30 @@ export default function CentralView() {
           tarefas.
         </p>
       ) : (
-        <TaskForm projects={projects} onCreated={afterChange} />
+        <TaskForm projects={projects} onCreated={refreshAll} />
       )}
 
-      {error && (
-        <p className="error-box" role="alert">
-          {error}
-        </p>
-      )}
+      <ErrorAlert>{error}</ErrorAlert>
       {loading && <p className="muted">Carregando tarefas…</p>}
-
-      {!loading && tasks.length === 0 && !error && (
+      {!loading && !error && tasks.length === 0 && (
         <p className="empty">Nenhuma pendência. 🎉</p>
       )}
 
-      {overdue.length > 0 && (
-        <section className="task-section">
-          <h2 className="section-title danger">Atrasadas ({overdue.length})</h2>
-          {renderList(overdue)}
-        </section>
-      )}
-      {upcoming.length > 0 && (
-        <section className="task-section">
-          <h2 className="section-title">Com prazo ({upcoming.length})</h2>
-          {renderList(upcoming)}
-        </section>
-      )}
-      {noDate.length > 0 && (
-        <section className="task-section">
-          <h2 className="section-title">Sem prazo ({noDate.length})</h2>
-          {renderList(noDate)}
-        </section>
-      )}
+      <TaskSection title="Atrasadas" tasks={overdue} danger>
+        {renderRow}
+      </TaskSection>
+      <TaskSection title="Com prazo" tasks={upcoming}>
+        {renderRow}
+      </TaskSection>
+      <TaskSection title="Sem prazo" tasks={noDate}>
+        {renderRow}
+      </TaskSection>
 
       {showBreakdown && (
         <TaskBreakdownModal
           projects={projects}
           onClose={() => setShowBreakdown(false)}
-          onConfirmed={afterChange}
+          onConfirmed={refreshAll}
         />
       )}
     </div>

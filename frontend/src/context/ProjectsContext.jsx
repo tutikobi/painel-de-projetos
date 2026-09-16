@@ -15,20 +15,33 @@ export function ProjectsProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    let ignore = false;
+    api.listProjects().then(
+      (data) => {
+        if (ignore) return;
+        setProjects(data);
+        setLoading(false);
+      },
+      (err) => {
+        if (ignore) return;
+        setError(err.message);
+        setLoading(false);
+      },
+    );
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const refreshProjects = useCallback(async () => {
     try {
       setProjects(await api.listProjects());
       setError(null);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    refreshProjects();
-  }, [refreshProjects]);
 
   const createProject = useCallback(async (data) => {
     const project = await api.createProject(data);

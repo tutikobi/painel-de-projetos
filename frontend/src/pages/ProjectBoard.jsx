@@ -1,23 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { api } from "../api/client.js";
 import { useProjects } from "../context/ProjectsContext.jsx";
+import { useTasks } from "../hooks/useTasks.js";
+import { deleteProjectMessage } from "../utils/tasks.js";
+import ErrorAlert from "../components/ErrorAlert.jsx";
+import ProjectHeader from "../components/ProjectHeader.jsx";
 import TaskBreakdownModal from "../components/TaskBreakdownModal.jsx";
-import TaskEditor from "../components/TaskEditor.jsx";
 import TaskForm from "../components/TaskForm.jsx";
-import TaskMeta from "../components/TaskMeta.jsx";
+import KanbanBoard from "../components/kanban/KanbanBoard.jsx";
 
-const COLUMNS = [
-  { status: "todo", label: "A fazer" },
-  { status: "doing", label: "Em andamento" },
-  { status: "done", label: "Concluído" },
-];
-
-// Kanban por projeto (spec H3).
+// Página de um projeto: cabeçalho, criação de tarefa e kanban (spec H3).
 export default function ProjectBoard() {
-  const { id } = useParams();
-  const projectId = Number(id);
+  const projectId = Number(useParams().id);
   const navigate = useNavigate();
   const {
     projects,
@@ -26,66 +21,45 @@ export default function ProjectBoard() {
     removeProject,
   } = useProjects();
   const project = projects.find((p) => p.id === projectId);
-
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [editingId, setEditingId] = useState(null);
+  const {
+    tasks,
+    loading,
+    error,
+    setError,
+    reload,
+    removeLocally,
+    updateTask,
+    deleteTask,
+  } = useTasks({ project: projectId });
   const [showBreakdown, setShowBreakdown] = useState(false);
 
-  const loadTasks = useCallback(async () => {
+  function refreshAll() {
+    reload();
+    refreshProjects();
+  }
+
+  async function move(taskId, status) {
     try {
-      setTasks(await api.listTasks({ project: projectId }));
-      setError(null);
+      await updateTask(taskId, { status }, { optimistic: true });
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    setLoading(true);
-    setEditingId(null);
-    loadTasks();
-  }, [loadTasks]);
-
-  async function handleDragEnd({ source, destination, draggableId }) {
-    if (!destination || destination.droppableId === source.droppableId) return;
-    const taskId = Number(draggableId);
-    const status = destination.droppableId;
-    const previous = tasks;
-
-    setTasks((current) =>
-      current.map((t) => (t.id === taskId ? { ...t, status } : t)),
-    );
-    try {
-      const updated = await api.updateTask(taskId, { status });
-      setTasks((current) =>
-        current.map((t) => (t.id === taskId ? updated : t)),
-      );
-    } catch (err) {
-      setTasks(previous);
       setError(`Não foi possível mover a tarefa: ${err.message}`);
     }
   }
 
   async function save(task, changes) {
-    const updated = await api.updateTask(task.id, changes);
-    setEditingId(null);
+    const updated = await updateTask(task.id, changes);
     if (updated.project !== projectId) {
-      setTasks((current) => current.filter((t) => t.id !== task.id));
+      removeLocally(task.id);
       refreshProjects();
     } else {
-      loadTasks();
+      reload(); // o prazo pode mudar a ordem dentro da coluna
     }
   }
 
   async function removeTask(task) {
     if (!window.confirm(`Excluir a tarefa "${task.title}"?`)) return;
     try {
-      await api.deleteTask(task.id);
-      setTasks((current) => current.filter((t) => t.id !== task.id));
+      await deleteTask(task.id);
       refreshProjects();
     } catch (err) {
       setError(`Não foi possível excluir a tarefa: ${err.message}`);
@@ -96,22 +70,13 @@ export default function ProjectBoard() {
   async function deleteProject() {
     try {
       const { task_count: count } = await api.countProjectTasks(projectId);
-      const message =
-        count > 0
-          ? `Este projeto tem ${count} ${count === 1 ? "tarefa" : "tarefas"}. Excluir mesmo assim?`
-          : "Excluir este projeto?";
-      if (!window.confirm(message)) return;
+      if (!window.confirm(deleteProjectMessage(count))) return;
       await api.deleteProject(projectId);
       removeProject(projectId);
       navigate("/", { replace: true });
     } catch (err) {
       setError(`Não foi possível excluir o projeto: ${err.message}`);
     }
-  }
-
-  function afterChange() {
-    loadTasks();
-    refreshProjects();
   }
 
   if (projectsLoading) return <p className="muted page">Carregando…</p>;
@@ -126,131 +91,28 @@ export default function ProjectBoard() {
 
   return (
     <div className={showBreakdown ? "page with-panel" : "page"}>
-      <header className="page-header">
-        <div>
-          <h1 className="with-dot">
-            <span
-              className="color-dot large"
-              style={{ background: project.color }}
-              aria-hidden="true"
-            />
-            {project.name}
-          </h1>
-          {project.description && (
-            <p className="muted">{project.description}</p>
-          )}
-        </div>
-        <div className="row">
-          <button
-            type="button"
-            className="button secondary"
-            onClick={() => setShowBreakdown(true)}
-          >
-            Quebrar meta com IA
-          </button>
-          <button
-            type="button"
-            className="button-link danger"
-            onClick={deleteProject}
-          >
-            Excluir projeto
-          </button>
-        </div>
-      </header>
-
+      <ProjectHeader
+        project={project}
+        onOpenBreakdown={() => setShowBreakdown(true)}
+        onDelete={deleteProject}
+      />
       <TaskForm
         projects={projects}
         fixedProjectId={projectId}
-        onCreated={afterChange}
+        onCreated={refreshAll}
       />
+      <ErrorAlert>{error}</ErrorAlert>
 
-      {error && (
-        <p className="error-box" role="alert">
-          {error}
-        </p>
-      )}
       {loading ? (
         <p className="muted">Carregando tarefas…</p>
       ) : (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="board">
-            {COLUMNS.map((column) => {
-              const columnTasks = tasks.filter(
-                (t) => t.status === column.status,
-              );
-              return (
-                <Droppable droppableId={column.status} key={column.status}>
-                  {(provided, snapshot) => (
-                    <section
-                      className={
-                        snapshot.isDraggingOver ? "column over" : "column"
-                      }
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                    >
-                      <h2 className="column-title">
-                        {column.label}{" "}
-                        <span className="count">{columnTasks.length}</span>
-                      </h2>
-                      {columnTasks.map((task, index) => (
-                        <Draggable
-                          draggableId={String(task.id)}
-                          index={index}
-                          key={task.id}
-                          isDragDisabled={editingId === task.id}
-                        >
-                          {(dragProvided, dragSnapshot) => (
-                            <article
-                              className={[
-                                "card",
-                                task.is_overdue ? "overdue" : "",
-                                dragSnapshot.isDragging ? "dragging" : "",
-                              ].join(" ")}
-                              ref={dragProvided.innerRef}
-                              {...dragProvided.draggableProps}
-                              {...dragProvided.dragHandleProps}
-                            >
-                              {editingId === task.id ? (
-                                <TaskEditor
-                                  task={task}
-                                  projects={projects}
-                                  onSave={(changes) => save(task, changes)}
-                                  onCancel={() => setEditingId(null)}
-                                />
-                              ) : (
-                                <>
-                                  <p className="task-title">{task.title}</p>
-                                  <TaskMeta task={task} />
-                                  <div className="task-actions">
-                                    <button
-                                      type="button"
-                                      className="button-link"
-                                      onClick={() => setEditingId(task.id)}
-                                    >
-                                      Editar
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="button-link danger"
-                                      onClick={() => removeTask(task)}
-                                    >
-                                      Excluir
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </article>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </section>
-                  )}
-                </Droppable>
-              );
-            })}
-          </div>
-        </DragDropContext>
+        <KanbanBoard
+          tasks={tasks}
+          projects={projects}
+          onMove={move}
+          onSave={save}
+          onDelete={removeTask}
+        />
       )}
 
       {showBreakdown && (
@@ -258,7 +120,7 @@ export default function ProjectBoard() {
           projects={projects}
           initialProjectId={projectId}
           onClose={() => setShowBreakdown(false)}
-          onConfirmed={afterChange}
+          onConfirmed={refreshAll}
         />
       )}
     </div>

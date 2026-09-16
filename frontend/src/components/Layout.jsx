@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useProjects } from "../context/ProjectsContext.jsx";
+import ColorDot from "./ColorDot.jsx";
 import ProjectForm from "./ProjectForm.jsx";
 
 export default function Layout() {
@@ -29,11 +30,7 @@ export default function Layout() {
             {projects.map((project) => (
               <li key={project.id}>
                 <NavLink to={`/projects/${project.id}`} className="nav-link">
-                  <span
-                    className="color-dot"
-                    style={{ background: project.color }}
-                    aria-hidden="true"
-                  />
+                  <ColorDot color={project.color} />
                   <span className="project-name">{project.name}</span>
                   <span className="count">{project.task_count}</span>
                 </NavLink>

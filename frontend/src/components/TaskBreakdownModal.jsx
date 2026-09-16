@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client.js";
-
-let nextKey = 0;
-const withKey = (item) => ({ ...item, key: ++nextKey });
+import { useEscapeKey } from "../hooks/useEscapeKey.js";
+import ErrorAlert from "./ErrorAlert.jsx";
+import GoalForm from "./breakdown/GoalForm.jsx";
+import SuggestionReview from "./breakdown/SuggestionReview.jsx";
+import {
+  hasBlankTitle,
+  toConfirmPayload,
+  toEditableItems,
+} from "./breakdown/suggestionItems.js";
 
 // Painel lateral (spec H4). Não bloqueia a tela: sem fundo modal, então o
 // usuário continua usando o painel enquanto a IA responde (spec: NFR de tempo
@@ -24,22 +30,14 @@ export default function TaskBreakdownModal({
   const abortRef = useRef(null);
 
   useEffect(() => () => abortRef.current?.abort(), []);
-
-  useEffect(() => {
-    function onKeyDown(event) {
-      if (event.key === "Escape") close();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  });
+  useEscapeKey(close);
 
   function close() {
     abortRef.current?.abort();
     onClose();
   }
 
-  async function requestSuggestions(event) {
-    event.preventDefault();
+  async function requestSuggestions() {
     if (!Number(projectId)) {
       setError("Escolha o projeto da meta.");
       return;
@@ -60,7 +58,7 @@ export default function TaskBreakdownModal({
         goal.trim(),
         controller.signal,
       );
-      setItems(data.suggestions.map(withKey));
+      setItems(toEditableItems(data.suggestions));
       setStep("review");
     } catch (err) {
       if (err.name === "AbortError") return;
@@ -76,14 +74,6 @@ export default function TaskBreakdownModal({
     setStep("input");
   }
 
-  function updateItem(key, changes) {
-    setItems((current) =>
-      current.map((item) =>
-        item.key === key ? { ...item, ...changes } : item,
-      ),
-    );
-  }
-
   function discardSuggestion() {
     setItems([]);
     setError(null);
@@ -91,7 +81,7 @@ export default function TaskBreakdownModal({
   }
 
   async function confirm() {
-    if (items.some((item) => !item.title.trim())) {
+    if (hasBlankTitle(items)) {
       setError("Preencha o título de todas as subtarefas ou remova as vazias.");
       return;
     }
@@ -100,10 +90,7 @@ export default function TaskBreakdownModal({
     try {
       const created = await api.confirmSubtasks(
         Number(projectId),
-        items.map((item) => ({
-          title: item.title.trim(),
-          due_date: item.due_date || null,
-        })),
+        toConfirmPayload(items),
       );
       onConfirmed(created, Number(projectId));
       onClose();
@@ -132,142 +119,28 @@ export default function TaskBreakdownModal({
         </button>
       </header>
 
-      {step !== "review" && (
-        <form className="stack" onSubmit={requestSuggestions}>
-          <label className="field">
-            <span>Projeto</span>
-            <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              disabled={step === "loading"}
-            >
-              <option value="">Escolha…</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Meta</span>
-            <textarea
-              rows={4}
-              maxLength={1000}
-              placeholder='Ex.: "escrever capítulo 3 do TCC até dia 20"'
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              disabled={step === "loading"}
-            />
-          </label>
-
-          {step === "loading" ? (
-            <div className="loading" role="status">
-              <span className="spinner" aria-hidden="true" />
-              <div>
-                <p>Gerando sugestões… isso pode levar alguns segundos.</p>
-                <p className="muted">
-                  Você pode continuar usando o painel enquanto espera.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="button-link"
-                onClick={cancelRequest}
-              >
-                Cancelar
-              </button>
-            </div>
-          ) : (
-            <button type="submit" className="button">
-              Sugerir subtarefas
-            </button>
-          )}
-        </form>
+      {step === "review" ? (
+        <SuggestionReview
+          items={items}
+          onItemsChange={setItems}
+          saving={saving}
+          onConfirm={confirm}
+          onDiscard={discardSuggestion}
+        />
+      ) : (
+        <GoalForm
+          projects={projects}
+          projectId={projectId}
+          onProjectChange={setProjectId}
+          goal={goal}
+          onGoalChange={setGoal}
+          loading={step === "loading"}
+          onSubmit={requestSuggestions}
+          onCancel={cancelRequest}
+        />
       )}
 
-      {step === "review" && (
-        <div className="stack">
-          <p className="muted">
-            Revise antes de salvar: edite títulos e prazos ou remova o que não
-            fizer sentido.
-          </p>
-          <ul className="suggestion-list">
-            {items.map((item) => (
-              <li key={item.key} className="suggestion">
-                <input
-                  className="grow"
-                  aria-label="Título da subtarefa"
-                  value={item.title}
-                  maxLength={200}
-                  onChange={(e) =>
-                    updateItem(item.key, { title: e.target.value })
-                  }
-                />
-                <input
-                  type="date"
-                  aria-label="Prazo da subtarefa"
-                  value={item.due_date ?? ""}
-                  onChange={(e) =>
-                    updateItem(item.key, { due_date: e.target.value || null })
-                  }
-                />
-                <button
-                  type="button"
-                  className="button-link danger"
-                  aria-label="Remover subtarefa"
-                  onClick={() =>
-                    setItems((current) =>
-                      current.filter((i) => i.key !== item.key),
-                    )
-                  }
-                >
-                  Remover
-                </button>
-              </li>
-            ))}
-          </ul>
-          {items.length === 0 && (
-            <p className="muted">Todas as sugestões foram removidas.</p>
-          )}
-          <button
-            type="button"
-            className="button-link"
-            onClick={() =>
-              setItems((current) => [
-                ...current,
-                withKey({ title: "", due_date: null }),
-              ])
-            }
-          >
-            + Adicionar subtarefa
-          </button>
-          <div className="row">
-            <button
-              type="button"
-              className="button"
-              onClick={confirm}
-              disabled={saving || items.length === 0}
-            >
-              {saving ? "Salvando…" : "Adicionar ao projeto"}
-            </button>
-            <button
-              type="button"
-              className="button secondary"
-              onClick={discardSuggestion}
-              disabled={saving}
-            >
-              Descartar sugestão
-            </button>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <p className="error-box" role="alert">
-          {error}
-        </p>
-      )}
+      <ErrorAlert>{error}</ErrorAlert>
     </aside>
   );
 }
