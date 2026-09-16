@@ -600,6 +600,11 @@ textarea {
   border-bottom: 1px solid var(--surface-muted);
 }
 
+/* O título ocupa a linha inteira para poder ser lido e revisado por completo. */
+.suggestion input.grow {
+  flex: 1 1 100%;
+}
+
 /* O painel de IA não é modal: em telas largas a página abre espaço para ele
    em vez de ficar escondida atrás (spec: NFR de tempo de resposta). */
 @media (min-width: 801px) {
