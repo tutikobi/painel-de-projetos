@@ -9,6 +9,7 @@ import CentralView from "./CentralView.jsx";
 
 vi.mock("../api/client.js", () => ({
   api: {
+    aiStatus: vi.fn(),
     listProjects: vi.fn(),
     listTasks: vi.fn(),
     updateTask: vi.fn(),
@@ -30,6 +31,7 @@ function renderView() {
 beforeEach(() => {
   Object.values(api).forEach((mock) => mock.mockReset());
   api.listProjects.mockResolvedValue([makeProject()]);
+  api.aiStatus.mockResolvedValue({ configured: true });
 });
 
 describe("CentralView (spec H2)", () => {

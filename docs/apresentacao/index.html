@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel de Projetos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@500&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  :root {
+    --ground: #f4f2f7;
+    --surface: #ffffff;
+    --surface-2: #faf8fc;
+    --ink: #1d1925;
+    --ink-soft: #5e5670;
+    --line: #ddd6e8;
+    --accent: #5b3e8a;
+    --accent-ink: #ffffff;
+    --accent-soft: #ece4f7;
+    --late: #b3261e;
+    --late-soft: #fbe9e7;
+    --warn: #7a4f00;
+    --warn-soft: #fff3d6;
+    --warn-line: #f0c36d;
+    --ok: #1f6f5c;
+    --ok-soft: #e1f3ee;
+    --shadow: 0 1px 2px rgb(29 25 37 / 8%), 0 8px 24px rgb(29 25 37 / 8%);
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131018;
+      --surface: #1d1824;
+      --surface-2: #231d2c;
+      --ink: #eeeaf4;
+      --ink-soft: #aaa1b9;
+      --line: #362d43;
+      --accent: #bba2e8;
+      --accent-ink: #1d1426;
+      --accent-soft: #2b2139;
+      --late: #f2a097;
+      --late-soft: #3a1e1c;
+      --warn: #f0c36d;
+      --warn-soft: #32270f;
+      --warn-line: #6e5418;
+      --ok: #7dd3bd;
+      --ok-soft: #173029;
+      --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 35%);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131018;
+    --surface: #1d1824;
+    --surface-2: #231d2c;
+    --ink: #eeeaf4;
+    --ink-soft: #aaa1b9;
+    --line: #362d43;
+    --accent: #bba2e8;
+    --accent-ink: #1d1426;
+    --accent-soft: #2b2139;
+    --late: #f2a097;
+    --late-soft: #3a1e1c;
+    --warn: #f0c36d;
+    --warn-soft: #32270f;
+    --warn-line: #6e5418;
+    --ok: #7dd3bd;
+    --ok-soft: #173029;
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 35%);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    line-height: 1.45;
+    padding-inline: 16px;
+  }
+  h1, h2, h3, p, ul, ol, figure { margin: 0; }
+  a { color: var(--accent); }
+  code, .mono { font-family: var(--mono); font-size: 0.86em; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- barra de controle ---------- */
+  .toolbar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    padding-block: 10px;
+    background: var(--ground);
+  }
+  .brand { font-family: var(--display); font-weight: 700; letter-spacing: -0.01em; }
+  .brand span { color: var(--ink-soft); font-family: var(--body); font-weight: 400; margin-left: 8px; }
+  .controls { display: flex; align-items: center; gap: 8px; }
+  .controls button {
+    font: 600 14px var(--body);
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .controls button:hover { border-color: var(--accent); }
+  .counter { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); min-width: 5ch; text-align: center; font-variant-numeric: tabular-nums; }
+  .progress { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s ease; }
+
+  /* ---------- palco ---------- */
+  .stage {
+    container-type: inline-size;
+    width: min(100%, calc((100dvh - 96px) * 16 / 9));
+    margin-inline: auto;
+    padding-block: 12px 24px;
+  }
+  .deck { display: flex; flex-direction: column; gap: 24px; }
+  .slide {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: clamp(20px, 4cqw, 64px);
+    font-size: clamp(15px, 1.5cqw, 26px);
+    display: flex;
+    flex-direction: column;
+    gap: 1.1em;
+    overflow: hidden;
+  }
+  .paged .slide { aspect-ratio: 16 / 9; }
+  .paged .slide:not(.active) { display: none; }
+  .slide-num {
+    position: absolute;
+    right: clamp(20px, 4cqw, 64px);
+    bottom: clamp(12px, 2.2cqw, 36px);
+    font-family: var(--mono);
+    font-size: 0.62em;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.66em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .story {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    margin-right: 0.5em;
+    border-radius: 4px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    letter-spacing: 0.02em;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 3.3em;
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.95em;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  h3 { font-family: var(--display); font-weight: 600; font-size: 1.05em; }
+  .lede { font-size: 1.12em; color: var(--ink-soft); max-width: 58ch; text-wrap: pretty; }
+  .soft { color: var(--ink-soft); }
+  .small { font-size: 0.8em; }
+
+  .split { display: grid; grid-template-columns: 5fr 7fr; gap: 2.2em; align-items: center; flex: 1; min-height: 0; }
+  .split.even { grid-template-columns: 1fr 1fr; }
+  .text { display: flex; flex-direction: column; gap: 0.9em; min-width: 0; }
+  .points { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.55em; }
+  .points li { padding-left: 1.1em; position: relative; text-wrap: pretty; }
+  .points li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.42em; height: 0.42em; border-radius: 1px; background: var(--accent); }
+  .points strong { font-weight: 600; }
+
+  /* moldura de tela com a URL real */
+  .shot {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface-2);
+    box-shadow: var(--shadow);
+    min-width: 0;
+  }
+  .shot figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    padding: 0.35em 0.8em;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 0.58em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .shot figcaption em { font-style: normal; color: var(--warn); overflow: hidden; text-overflow: ellipsis; }
+  .shot img { display: block; width: 100%; height: auto; max-width: 100%; }
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; min-width: 0; }
+  .shot.phone { max-width: 11em; justify-self: center; }
+
+  /* capa */
+  .cover { justify-content: space-between; background:
+      linear-gradient(135deg, var(--accent-soft) 0%, transparent 55%), var(--surface); }
+  .cover .split { grid-template-columns: 6fr 6fr; }
+  .cover-meta { display: flex; flex-wrap: wrap; gap: 0.5em 1.4em; font-size: 0.8em; color: var(--ink-soft); }
+  .cover-meta b { color: var(--ink); font-weight: 600; }
+
+  /* citação do rascunho */
+  .quote {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.55em;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    border-left: 3px solid var(--late);
+    padding-left: 0.8em;
+    text-wrap: balance;
+  }
+  .goals { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2em; }
+  .goal { border-top: 2px solid var(--ink); padding-top: 0.6em; display: flex; flex-direction: column; gap: 0.35em; }
+
+  /* sequências */
+  .flow { list-style: none; padding: 0; display: grid; gap: 0.8em; counter-reset: step; }
+  .flow.row { grid-template-columns: repeat(7, 1fr); }
+  .flow li { counter-increment: step; display: flex; flex-direction: column; gap: 0.3em; min-width: 0; }
+  .flow li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 0.7em;
+    color: var(--accent);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.3em;
+  }
+  .flow .file { font-family: var(--mono); font-size: 0.78em; font-weight: 500; overflow-wrap: anywhere; }
+  .flow .what { font-size: 0.82em; color: var(--ink-soft); }
+  .flow.col li { display: grid; grid-template-columns: 2.2em 1fr; column-gap: 0.6em; }
+  .flow.col li::before { border-bottom: none; padding: 0.15em 0 0; grid-row: span 2; }
+  .flow.col b { font-weight: 600; }
+  .flow.col span { font-size: 0.85em; color: var(--ink-soft); }
+  .rule-note { border-top: 1px solid var(--line); padding-top: 0.8em; font-size: 0.9em; }
+
+  /* arquitetura */
+  .arch { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; gap: 0.7em; }
+  .node {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.8em 0.9em;
+    background: var(--surface-2);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35em;
+  }
+  .node .port { font-family: var(--mono); font-size: 0.7em; color: var(--accent); }
+  .node p { font-size: 0.8em; color: var(--ink-soft); }
+  .node.secure { border-color: var(--accent); }
+  .link { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.62em; color: var(--ink-soft); text-align: center; gap: 0.2em; }
+  .link b { font-size: 1.8em; color: var(--accent); font-weight: 500; line-height: 1; }
+  .ext { margin-top: 0.4em; display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.7em; }
+  .ext .node:first-of-type { grid-column: 5; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2em; }
+  .fact { border-top: 2px solid var(--accent); padding-top: 0.5em; font-size: 0.85em; }
+  .fact b { display: block; font-weight: 600; }
+
+  /* IA: entrada e saída */
+  .io { display: grid; grid-template-columns: 5fr 7fr; gap: 1.6em; align-items: start; }
+  .goal-box {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.9em 1em;
+    background: var(--surface-2);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+  }
+  .goal-box .label { font-family: var(--mono); font-size: 0.62em; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+  .goal-box .typed { font-size: 1.15em; font-weight: 600; }
+  .subtasks { list-style: none; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .subtasks li { display: grid; grid-template-columns: 1fr auto; gap: 1em; padding: 0.42em 0.9em; border-top: 1px solid var(--line); font-size: 0.9em; }
+  .subtasks li:first-child { border-top: none; }
+  .subtasks .date { font-family: var(--mono); font-size: 0.85em; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .subtasks li.deadline .date { color: var(--accent); font-weight: 500; }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 0.62em; padding: 0.15em 0.55em; border-radius: 999px; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn-line); }
+  .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em 1.4em; font-size: 0.85em; }
+  .rules div { padding-left: 0.8em; border-left: 2px solid var(--line); }
+
+  /* resultados da IA */
+  .outcomes { width: 100%; border-collapse: collapse; font-size: 0.8em; }
+  .outcomes th, .outcomes td { text-align: left; padding: 0.45em 0.6em; border-top: 1px solid var(--line); vertical-align: top; }
+  .outcomes th { font-family: var(--mono); font-weight: 500; font-size: 0.85em; color: var(--ink-soft); border-top: none; }
+  .code { font-family: var(--mono); font-size: 0.85em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 0.05em 0.5em; border-radius: 4px; font-family: var(--mono); font-size: 0.85em; }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.late { background: var(--late-soft); color: var(--late); }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.neutral { background: var(--accent-soft); color: var(--accent); }
+
+  .warn-quote {
+    background: var(--warn-soft);
+    border: 1px solid var(--warn-line);
+    color: var(--warn);
+    border-radius: 8px;
+    padding: 0.7em 0.9em;
+    font-size: 0.9em;
+  }
+  .warn-quote b { display: block; }
+
+  /* diálogo nativo reproduzido */
+  .dialog {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-2);
+    padding: 1em 1.1em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8em;
+    box-shadow: var(--shadow);
+  }
+  .dialog .host { font-family: var(--mono); font-size: 0.66em; color: var(--ink-soft); }
+  .dialog .actions { display: flex; justify-content: flex-end; gap: 0.5em; }
+  .dialog .actions span { font-size: 0.8em; padding: 0.3em 0.9em; border-radius: 4px; border: 1px solid var(--line); }
+  .dialog .actions span.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  /* segurança */
+  .guarantees { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em 1.4em; }
+  .guarantee { display: flex; flex-direction: column; gap: 0.3em; border-top: 1px solid var(--line); padding-top: 0.6em; }
+  .guarantee b { font-weight: 600; }
+  .guarantee span { font-size: 0.8em; color: var(--ink-soft); }
+  .guarantee span::before { content: "verificado: "; font-family: var(--mono); font-size: 0.9em; color: var(--ok); }
+
+  /* números de qualidade */
+  .numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4em; }
+  .number { display: flex; flex-direction: column; gap: 0.2em; }
+  .number b { font-family: var(--display); font-size: 3.2em; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .number span { font-size: 0.85em; color: var(--ink-soft); }
+  .found { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6em 1.4em; font-size: 0.85em; }
+  .found li { border-left: 2px solid var(--late); padding-left: 0.7em; }
+
+  .changes { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7em 1.6em; list-style: none; padding: 0; }
+  .changes li { display: grid; grid-template-columns: auto 1fr; gap: 0.2em 0.7em; font-size: 0.88em; }
+  .changes .where { font-family: var(--mono); font-size: 0.72em; color: var(--accent); padding-top: 0.25em; }
+  .changes b { font-weight: 600; }
+  .changes p { grid-column: 2; color: var(--ink-soft); font-size: 0.92em; }
+
+  .terminal {
+    background: #17131d;
+    color: #e9e3f2;
+    border-radius: 8px;
+    padding: 0.8em 1em;
+    font-family: var(--mono);
+    font-size: 0.66em;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .terminal .c { color: #9d93ad; }
+  .terminal .t { color: #c9b3f0; }
+  .creds { display: flex; flex-wrap: wrap; gap: 0.4em 1.2em; font-size: 0.85em; }
+  .creds code { background: var(--accent-soft); color: var(--accent); padding: 0.1em 0.45em; border-radius: 4px; }
+
+  /* telas estreitas: os slides viram leitura contínua */
+  @container (max-width: 760px) {
+    .slide { aspect-ratio: auto !important; overflow: visible; }
+    .split, .split.even, .cover .split, .io, .goals, .rules, .facts, .guarantees, .numbers, .found, .changes, .shots { grid-template-columns: 1fr; }
+    .flow.row { grid-template-columns: 1fr 1fr; }
+    .arch, .ext { grid-template-columns: 1fr; }
+    .ext .node:first-of-type { grid-column: auto; }
+    .link { flex-direction: row; }
+    .link b { transform: rotate(90deg); }
+    h1 { font-size: 2.3em; }
+    h2 { font-size: 1.5em; }
+    .slide-num { position: static; align-self: flex-end; }
+    .outcomes-wrap { overflow-x: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) { .progress i { transition: none; } }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .toolbar { display: none; }
+    .stage { width: 100%; padding: 0; }
+    .deck { gap: 0; }
+    .paged .slide:not(.active) { display: flex; }
+    .slide { break-after: page; box-shadow: none; border: none; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<header class="toolbar" aria-label="Controles da apresentação">
+  <div class="brand">Painel de Projetos <span>apresentação</span></div>
+  <div class="controls">
+    <button type="button" id="prev" aria-label="Slide anterior">←</button>
+    <span class="counter" id="counter" aria-live="polite">1 / 20</span>
+    <button type="button" id="next" aria-label="Próximo slide">→</button>
+    <button type="button" id="mode">Ver todos</button>
+  </div>
+</header>
+<div class="progress" aria-hidden="true"><i id="bar"></i></div>
+
+<main class="stage">
+  <div class="deck paged" id="deck">
+
+    <!-- 1 -->
+    <section class="slide cover active" aria-label="Capa">
+      <div class="split">
+        <div class="text">
+          <p class="eyebrow">Projeto de disciplina · spec-driven development</p>
+          <h1>Painel de Projetos</h1>
+          <p class="lede">Todas as pendências de vários projetos numa só tela, ordenadas por prazo, e uma IA que quebra metas grandes em passos com data.</p>
+        </div>
+        <figure class="shot">
+          <figcaption>localhost:5173/</figcaption>
+          <img src="img/03-pendencias.png" alt="Tela de pendências com tarefas atrasadas no topo">
+        </figure>
+      </div>
+      <div class="cover-meta">
+        <span><b>Backend</b> Django 6.1 + Django REST Framework + SQLite</span>
+        <span><b>Frontend</b> React 19 + Vite 8</span>
+        <span><b>IA</b> Claude (API da Anthropic)</span>
+        <span><b>Código</b> github.com/tutikobi/painel-de-projetos</span>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" aria-label="O problema">
+      <p class="eyebrow">O problema</p>
+      <p class="quote">“Às vezes eu só lembro que tinha prazo quando já tá em cima.”</p>
+      <p class="lede">Quem toca freelas, mestrado e artigos ao mesmo tempo tem as pendências espalhadas em memória, chat e e-mail, sem uma visão única do que está atrasado. <span class="soft small">(do rascunho inicial, <code>00_prompt-inicial.md</code>)</span></p>
+      <div class="goals">
+        <div class="goal">
+          <h3>1. Centralizar</h3>
+          <p>Tarefas de todos os projetos numa única lista, da mais urgente para a menos urgente, com as atrasadas em destaque.</p>
+        </div>
+        <div class="goal">
+          <h3>2. Planejar com IA</h3>
+          <p>Transformar “escrever o capítulo 3 até dia 30” em subtarefas com prazos, porque a maior dificuldade é decidir por onde começar.</p>
+        </div>
+      </div>
+      <p class="soft small">Fora de escopo, por decisão: colaboração multiusuário, e-mail/push, calendário externo, anexos, relatórios.</p>
+      <span class="slide-num">02 / 20</span>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide" aria-label="Como foi construído">
+      <p class="eyebrow">Como foi construído</p>
+      <h2>Primeiro a intenção, depois o código</h2>
+      <ol class="flow row">
+        <li><span class="file">00_prompt-inicial.md</span><span class="what">a ideia em rascunho</span></li>
+        <li><span class="file">constitution.md</span><span class="what">regras que não se negociam: stack, segurança, papel da IA</span></li>
+        <li><span class="file">spec.md</span><span class="what">histórias H1–H6, critérios de aceitação, casos extremos</span></li>
+        <li><span class="file">plan.md</span><span class="what">decisões técnicas e dependências justificadas</span></li>
+        <li><span class="file">tasks.md</span><span class="what">tarefas ligadas a cada história</span></li>
+        <li><span class="file">código + testes</span><span class="what">backend, frontend, navegador, CI</span></li>
+        <li><span class="file">RELATO.md</span><span class="what">o que mudou e por quê</span></li>
+      </ol>
+      <p class="rule-note"><strong>Regra que guiou o trabalho:</strong> mudou de ideia no meio da implementação? A spec e o plano são atualizados <em>antes</em> do código. Nada de ajuste silencioso. A revisão crítica dos artefatos está em <code>ANALISE.md</code>.</p>
+      <span class="slide-num">03 / 20</span>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide" aria-label="Arquitetura">
+      <p class="eyebrow">Arquitetura</p>
+      <h2>Duas partes que rodam juntas</h2>
+      <div class="arch">
+        <div class="node">
+          <span class="port">navegador</span>
+          <h3>React (SPA)</h3>
+          <p>As telas. Guarda o login só na memória da aba.</p>
+        </div>
+        <div class="link"><b>→</b>/api<br>JSON + JWT</div>
+        <div class="node">
+          <span class="port">:5173 · Vite</span>
+          <h3>Servidor de desenvolvimento</h3>
+          <p>Entrega as telas e repassa <code>/api</code> ao backend (sem CORS).</p>
+        </div>
+        <div class="link"><b>→</b>proxy</div>
+        <div class="node secure">
+          <span class="port">:8000 · Django REST</span>
+          <h3>Backend</h3>
+          <p>Login, projetos, tarefas e serviço de IA. SQLite como banco.</p>
+        </div>
+      </div>
+      <div class="ext">
+        <div class="node secure">
+          <span class="port">HTTPS · só a partir do backend</span>
+          <h3>API da Anthropic (Claude)</h3>
+          <p>Recebe apenas a meta e a data de hoje. A chave nunca sai do servidor.</p>
+        </div>
+      </div>
+      <div class="facts">
+        <p class="fact"><b>Sem o backend, nada funciona</b>A tela abre, mas o login falha. São dois terminais.</p>
+        <p class="fact"><b>Cada usuário vê só o que é seu</b>Todas as consultas filtram pelo usuário logado.</p>
+        <p class="fact"><b>IA é complemento</b>Sem ela, todo o resto continua funcionando.</p>
+      </div>
+      <span class="slide-num">04 / 20</span>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide" aria-label="Login e cadastro">
+      <div class="split">
+        <div class="text">
+          <p class="eyebrow"><span class="story">H6</span>Autenticação</p>
+          <h2>Entrar e criar conta</h2>
+          <ul class="points">
+            <li><strong>Criar conta</strong> pede usuário único e senha que passe nas regras do Django: mínimo de 8 caracteres, não só números, não comum.</li>
+            <li><strong>Exemplo:</strong> a senha <code>123</code> é recusada com a regra que falhou, como mostra a tela ao lado.</li>
+            <li>Toda rota de dados exige login: sem token, a API responde <code>401</code>. Dados de outra pessoa respondem <code>404</code>.</li>
+            <li>O token fica <strong>só na memória</strong> da aba (regra da constituição: nenhum token em texto plano). Por isso <kbd>F5</kbd> pede login de novo.</li>
+          </ul>
+        </div>
+        <div class="shots">
+          <figure class="shot">
+            <figcaption>/login · entrar</figcaption>
+            <img src="img/01-login.png" alt="Tela de login preenchida com o usuário demo">
+          </figure>
+          <figure class="shot">
+            <figcaption>/login · criar conta</figcaption>
+            <img src="img/02-cadastro-senha-fraca.png" alt="Cadastro recusando senha fraca">
+          </figure>
+        </div>
+      </div>
+      <span class="slide-num">05 / 20</span>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide" aria-label="Projetos">
+      <div class="split">
+        <div class="text">
+          <p class="eyebrow"><span class="story">H1</span>Projetos</p>
+          <h2>Um projeto por cliente, curso ou pesquisa</h2>
+          <ul class="points">
+            <li><strong>+ Novo projeto</strong> na barra lateral: nome, descrição curta (até 280 caracteres) e uma cor para reconhecer de relance.</li>
+            <li>O projeto aparece <strong>na hora</strong> na barra lateral e no seletor de “Nova tarefa”, sem recarregar.</li>
+            <li>Ao lado de cada projeto, a contagem de tarefas.</li>
+            <li>Dois projetos com o mesmo nome são permitidos: a spec trata isso como comportamento aceitável.</li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <figcaption>localhost:5173/ · barra lateral</figcaption>
+          <img src="img/04-novo-projeto-e-tarefa.png" alt="Formulário de novo projeto aberto na barra lateral">
+        </figure>
+      </div>
+      <span class="slide-num">06 / 20</span>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide" aria-label="Visão central">
+      <div class="split">
+        <div class="text">
+          <p class="eyebrow"><span class="story">H2</span>Visão central</p>
+          <h2>O que priorizar, sem abrir projeto por projeto</h2>
+          <ul class="points">
+            <li>Três seções: <span class="pill late">Atrasadas</span> <span class="pill neutral">Com prazo</span> <span class="pill neutral">Sem prazo</span>. Tarefa sem data nunca se mistura às datadas.</li>
+            <li>Ordem por prazo, da mais urgente para a menos urgente. Empate: a mais antiga primeiro.</li>
+            <li><strong>Exemplo:</strong> “Revisar bibliografia do capítulo 2” venceu em 13/09 e aparece no topo, com borda vermelha e selo “Atrasada”.</li>
+            <li>A tela inteira vem de <strong>uma chamada</strong>: <code>GET /api/tasks/?status=todo,doing</code>, e não uma por projeto.</li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <figcaption>localhost:5173/ · Pendências</figcaption>
+          <img src="img/03-pendencias.png" alt="Pendências separadas em atrasadas e com prazo">
+        </figure>
+      </div>
+      <span class="slide-num">07 / 20</span>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide" aria-label="Criar, concluir e editar tarefas">
+      <div class="split">
+        <div class="text">
+          <p class="eyebrow"><span class="story">H5</span>Tarefas</p>
+          <h2>Criar, concluir, editar, excluir</h2>
+          <ul class="points">
+            <li><strong>Criar:</strong> título, projeto e prazo opcional. Prazo no passado é permitido (registro retroativo) e a tarefa já nasce “Atrasada”.</li>
+            <li><strong>Concluir:</strong> marcar a caixinha tira a tarefa das pendências. Ela continua visível no kanban, em “Concluído”.</li>
+            <li><strong>Editar:</strong> título, prazo e projeto. Mudar a data move a tarefa de seção. Só dá para mover para projetos seus.</li>
+            <li><strong>Excluir:</strong> sempre pede confirmação.</li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <figcaption>localhost:5173/ · editando uma tarefa</figcaption>
+          <img src="img/05-editar-tarefa.png" alt="Tarefa em modo de edição com campos de título, prazo e projeto">
+        </figure>
+      </div>
+      <span class="slide-num">08 / 20</span>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide" aria-label="Kanban">
+      <div class="split">
+        <div class="text">
+          <p class="eyebrow"><span class="story">H3</span>Kanban por projeto</p>
+          <h2>Arrastar entre colunas grava no servidor</h2>
+          <ul class="points">
+            <li>Colunas <strong>A fazer</strong>, <strong>Em andamento</strong> e <strong>Concluído</strong>, só com as tarefas daquele projeto.</li>
+            <li>Soltar o card em outra coluna muda o status na hora e grava com <code>PATCH /api/tasks/{id}/</code>.</li>
+            <li>Se a gravação falhar, o card <strong>volta</strong> para onde estava e aparece uma mensagem de erro.</li>
+            <li>Voltando em “Pendências”, a mudança já está lá, sem recarregar a página.</li>
+            <li>O selo <span class="pill neutral">IA</span> marca tarefas criadas a partir de sugestões.</li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <figcaption>localhost:5173/projects/1 · TCC — Mestrado</figcaption>
+          <img src="img/06-kanban.png" alt="Kanban do projeto TCC com três colunas">
+        </figure>
+      </div>
+      <span class="slide-num">09 / 20</span>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide" aria-label="O que a IA faz">
+      <p class="eyebrow"><span class="story">H4</span>Quebra de meta com IA</p>
+      <h2>O que a IA faz: transforma uma meta vaga em passos com data</h2>
+      <div class="io">
+        <div class="goal-box">
+          <span class="label">Você escreve (hoje: 16/09/2026)</span>
+          <span class="typed">“Escrever o capítulo 3 da dissertação até dia 30”</span>
+          <span class="label">O backend envia ao Claude</span>
+          <span class="small soft">a meta + <code>Data de hoje: 2026-09-16 (quarta-feira)</code>. Nome e descrição do projeto não saem do servidor.</span>
+        </div>
+        <div>
+          <ol class="subtasks" aria-label="Exemplo de subtarefas sugeridas">
+            <li><span>Reler anotações e artigos do capítulo 2</span><span class="date">18/09</span></li>
+            <li><span>Definir estrutura e subseções do capítulo 3</span><span class="date">19/09</span></li>
+            <li><span>Escrever a seção 3.1 (fundamentação)</span><span class="date">22/09</span></li>
+            <li><span>Escrever a seção 3.2 (método proposto)</span><span class="date">25/09</span></li>
+            <li><span>Revisar texto, figuras e referências</span><span class="date">28/09</span></li>
+            <li class="deadline"><span>Enviar o capítulo 3 ao orientador</span><span class="date">30/09 · prazo final</span></li>
+          </ol>
+          <p class="small soft" style="margin-top:.5em"><span class="tag">exemplo ilustrativo</span> A resposta real muda a cada chamada.</p>
+        </div>
+      </div>
+      <div class="rules">
+        <div>De <strong>3 a 10</strong> subtarefas, na ordem de execução.</div>
+        <div>Datas reais, distribuídas <strong>até o prazo final</strong>, nunca depois.</div>
+        <div>“Até dia 30” = a próxima vez que o dia 30 chegar.</div>
+        <div>Meta sem prazo → subtarefas <strong>sem data</strong>. A IA não inventa datas.</div>
+      </div>
+      <span class="slide-num">10 / 20</span>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide" aria-label="Caminho de uma meta">
+      <div class="split even">
+        <div class="text">
+          <p class="eyebrow"><span class="story">H4</span>O caminho de uma meta</p>
+          <h2>A IA sugere; quem decide e grava é você</h2>
+          <p class="lede">A constituição dá à IA uma única responsabilidade: sugerir. Ela nunca cria, edita ou exclui tarefa sozinha.</p>
+          <p class="small soft">Modelo <code>claude-opus-5</code> (configurável), resposta em JSON com formato obrigatório, espera máxima de 60 s. Sugerir e gravar são dois endpoints separados: <code>/api/ai/breakdown/</code> e <code>/api/ai/breakdown/confirm/</code>.</p>
+        </div>
+        <ol class="flow col">
+          <li><b>O painel verifica se a chave existe</b><span><code>GET /api/ai/status/</code> responde só verdadeiro ou falso</span></li>
+          <li><b>Você escolhe o projeto e escreve a meta</b><span>meta vazia ou com mais de 1000 caracteres é recusada antes de gastar uma chamada</span></li>
+          <li><b>O backend chama o Claude</b><span>com a meta e a data de hoje, pedindo JSON com título e prazo</span></li>
+          <li><b>O backend confere a resposta com rigor</b><span>de 1 a 20 itens, títulos não vazios, datas AAAA-MM-DD válidas. Fora disso é erro; nada é “consertado”</span></li>
+          <li><b>Você revisa</b><span>edita, remove, adiciona ou descarta tudo</span></li>
+          <li><b>“Adicionar ao projeto” grava</b><span>só agora as tarefas entram no banco, com o selo IA</span></li>
+        </ol>
+      </div>
+      <span class="slide-num">11 / 20</span>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide" aria-label="Pedindo sugestões">
+      <p class="eyebrow"><span class="story">H4</span>Pedindo sugestões</p>
+      <h2>Painel lateral que não trava a tela</h2>
+      <div class="shots">
+        <figure class="shot">
+          <figcaption>1 · meta escrita <em>IA simulada</em></figcaption>
+          <img src="img/08-ia-meta.png" alt="Painel de IA com a meta digitada">
+        </figure>
+        <figure class="shot">
+          <figcaption>2 · aguardando a IA <em>IA simulada</em></figcaption>
+          <img src="img/09-ia-carregando.png" alt="Painel de IA mostrando carregamento">
+        </figure>
+      </div>
+      <ul class="points">
+        <li>Enquanto espera, dá para continuar usando o kanban e criar tarefas: o painel abre espaço na página em vez de cobri-la.</li>
+        <li><strong>Cancelar</strong> descarta a espera. <span class="soft">A chamada já iniciada no servidor termina e não grava nada.</span></li>
+      </ul>
+      <span class="slide-num">12 / 20</span>
+    </section>
+
+    <!-- 13 -->
+    <section class="slide" aria-label="Revisão antes de salvar">
+      <p class="eyebrow"><span class="story">H4</span>Revisão antes de salvar</p>
+      <h2>Nada é gravado até “Adicionar ao projeto”</h2>
+      <div class="shots">
+        <figure class="shot">
+          <figcaption>3 · lista editável <em>IA simulada</em></figcaption>
+          <img src="img/10-ia-revisao.png" alt="Lista de subtarefas sugeridas com título e prazo editáveis">
+        </figure>
+        <figure class="shot">
+          <figcaption>4 · depois de confirmar</figcaption>
+          <img src="img/11-ia-confirmado.png" alt="Kanban com novas tarefas marcadas com o selo IA">
+        </figure>
+      </div>
+      <ul class="points">
+        <li>Cada sugestão tem título e prazo editáveis, além de <strong>Remover</strong>. Também há <strong>+ Adicionar subtarefa</strong> e <strong>Descartar sugestão</strong>.</li>
+        <li>No exemplo, a primeira sugestão foi removida: só as outras cinco entraram no kanban, com o selo <span class="pill neutral">IA</span>.</li>
+      </ul>
+      <span class="slide-num">13 / 20</span>
+    </section>
+
+    <!-- 14 -->
+    <section class="slide" aria-label="IA sem chave cadastrada">
+      <div class="split">
+        <div class="text">
+          <p class="eyebrow"><span class="story">H4</span>Sem chave cadastrada</p>
+          <h2>Aviso claro, e o resto continua funcionando</h2>
+          <div class="warn-quote"><b>⚠ Chave da API do Claude não cadastrada</b>Por isso não é possível executar esta ação de IA.</div>
+          <div class="outcomes-wrap">
+            <table class="outcomes">
+              <thead><tr><th>Situação</th><th>O que a pessoa vê</th><th>API</th></tr></thead>
+              <tbody>
+                <tr><td>Sem chave no servidor</td><td>Esse aviso, ao abrir o painel, com o botão desabilitado</td><td class="code"><span class="pill warn">503</span></td></tr>
+                <tr><td>Meta vazia</td><td>“Descreva a meta antes de pedir sugestões.”</td><td class="code"><span class="pill neutral">400</span></td></tr>
+                <tr><td>Rede, recusa ou resposta fora do formato</td><td>“Não foi possível gerar sugestões agora…”</td><td class="code"><span class="pill late">502</span></td></tr>
+                <tr><td>Deu certo</td><td>Lista para revisar</td><td class="code"><span class="pill ok">200</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <figure class="shot">
+          <figcaption>localhost:5173/projects/1 · servidor real, sem chave</figcaption>
+          <img src="img/07-ia-sem-chave.png" alt="Painel de IA com aviso amarelo de chave não cadastrada">
+        </figure>
+      </div>
+      <span class="slide-num">14 / 20</span>
+    </section>
+
+    <!-- 15 -->
+    <section class="slide" aria-label="Exclusão de projeto e celular">
+      <div class="split even">
+        <div class="text">
+          <p class="eyebrow">Casos extremos da spec</p>
+          <h2>Excluir projeto em duas etapas</h2>
+          <ul class="points">
+            <li><strong>1ª etapa:</strong> a tela pergunta ao servidor quantas tarefas cairão junto (<code>DELETE …?confirm=false</code> só conta, não apaga).</li>
+            <li><strong>2ª etapa:</strong> só depois do “OK” o projeto é excluído, com as tarefas em cascata.</li>
+          </ul>
+          <div class="dialog" role="img" aria-label="Reprodução da confirmação exibida pelo navegador">
+            <span class="host">localhost:5173 diz</span>
+            <span>Este projeto tem 6 tarefas. Excluir mesmo assim?</span>
+            <div class="actions"><span class="primary">OK</span><span>Cancelar</span></div>
+          </div>
+          <p class="small soft">Reprodução da janela nativa do navegador, que não aparece em capturas de tela.</p>
+        </div>
+        <figure class="shot phone">
+          <figcaption>400 px de largura</figcaption>
+          <img src="img/12-celular.png" alt="Tela de pendências em largura de celular">
+        </figure>
+      </div>
+      <span class="slide-num">15 / 20</span>
+    </section>
+
+    <!-- 16 -->
+    <section class="slide" aria-label="Segurança e privacidade">
+      <p class="eyebrow">Constituição · segurança e privacidade</p>
+      <h2>Cada regra tem um jeito de ser conferida</h2>
+      <div class="guarantees">
+        <div class="guarantee"><b>Toda rota de dados exige login</b><span>teste percorre todas as rotas sem token e espera 401</span></div>
+        <div class="guarantee"><b>Ninguém vê dado de outra pessoa</b><span>testes de leitura, edição e exclusão cruzada respondem 404</span></div>
+        <div class="guarantee"><b>A chave da IA nunca chega ao navegador</b><span>status responde só verdadeiro ou falso; teste confere que o valor não vaza</span></div>
+        <div class="guarantee"><b>Descrições e metas fora dos logs</b><span>testes capturam todos os logs e procuram o texto sensível</span></div>
+        <div class="guarantee"><b>Senha só com hash do Django</b><span>teste confere que a senha gravada não é o texto digitado</span></div>
+        <div class="guarantee"><b>Nenhum token salvo em texto plano</b><span>tokens só em memória; o roteiro no navegador confere que F5 pede login</span></div>
+      </div>
+      <span class="slide-num">16 / 20</span>
+    </section>
+
+    <!-- 17 -->
+    <section class="slide" aria-label="Qualidade e testes">
+      <p class="eyebrow">Qualidade</p>
+      <h2>Testado em três camadas, a cada push</h2>
+      <div class="numbers">
+        <div class="number"><b>100</b><span>testes da API (pytest-django), com a IA sempre simulada</span></div>
+        <div class="number"><b>78</b><span>testes do frontend (Vitest + Testing Library), simulando cliques e digitação</span></div>
+        <div class="number"><b>24</b><span>verificações no navegador real, história por história (H1–H6)</span></div>
+      </div>
+      <p class="small soft">GitHub Actions roda tudo numa máquina limpa: black, migrations, pytest, ESLint, Prettier, Vitest, build e o roteiro no navegador.</p>
+      <h3>Problemas reais que os testes encontraram</h3>
+      <ul class="found">
+        <li>O painel de IA cobria o botão “Adicionar” e uma coluna do kanban.</li>
+        <li>Quando concluir uma tarefa falhava, a mensagem de erro sumia antes de aparecer.</li>
+        <li>Sem chave, o SDK da Anthropic gerava erro 500 em vez de um aviso tratado.</li>
+        <li>Na revisão da IA, títulos longos ficavam cortados no painel estreito.</li>
+      </ul>
+      <span class="slide-num">17 / 20</span>
+    </section>
+
+    <!-- 18 -->
+    <section class="slide" aria-label="O que mudou na spec">
+      <p class="eyebrow">Spec viva · registrado em RELATO.md</p>
+      <h2>O que mudou durante a implementação</h2>
+      <ul class="changes">
+        <li><span class="where">constituição</span><b>Renovação de token liberada sem login</b><p>Ela exige o refresh token, que já é uma credencial.</p></li>
+        <li><span class="where">spec H6</span><b>F5 pede login</b><p>Consequência de não guardar token em lugar nenhum.</p></li>
+        <li><span class="where">plano</span><b>CORS trocado por proxy do Vite</b><p>Uma dependência a menos, mesmo resultado.</p></li>
+        <li><span class="where">plano</span><b>“Modal” virou painel lateral</b><p>Um modal travaria a tela, contrariando o requisito de desempenho.</p></li>
+        <li><span class="where">spec</span><b>Aviso de chave não cadastrada</b><p>Antes, sem chave, aparecia a mesma mensagem genérica de falha.</p></li>
+        <li><span class="where">tarefas</span><b>T2.7 e T2.8 adicionadas</b><p>Nenhuma tarefa de frontend cobria H1 e H5.</p></li>
+      </ul>
+      <span class="slide-num">18 / 20</span>
+    </section>
+
+    <!-- 19 -->
+    <section class="slide" aria-label="Limitações">
+      <p class="eyebrow">Com honestidade</p>
+      <h2>Limitações conhecidas</h2>
+      <ul class="points">
+        <li><strong>A chamada real ao Claude não foi exercitada.</strong> Não havia chave durante o desenvolvimento. O caminho sem chave foi testado de ponta a ponta. O caminho com sugestões foi testado com respostas simuladas no formato que o código exige. É o primeiro ponto a validar com uma chave.</li>
+        <li><strong>F5 exige novo login.</strong> Sessão persistente exigiria emendar a constituição (por exemplo, cookie HttpOnly).</li>
+        <li><strong>A ordem dentro da coluna do kanban é sempre por prazo.</strong> Não há reordenação manual.</li>
+        <li><strong>Configuração só de desenvolvimento:</strong> não há deploy, Postgres nem servidor de arquivos estáticos.</li>
+        <li><strong>As sugestões da IA não são reprodutíveis:</strong> um modelo de linguagem responde diferente a cada chamada. Por isso nenhum teste depende delas.</li>
+      </ul>
+      <span class="slide-num">19 / 20</span>
+    </section>
+
+    <!-- 20 -->
+    <section class="slide" aria-label="Como rodar">
+      <div class="split even">
+        <div class="text">
+          <p class="eyebrow">Para testar</p>
+          <h2>Dois terminais e um usuário pronto</h2>
+          <p class="creds"><span>Usuário <code>demo</code></span><span>Senha <code>Painel-demo-2026</code></span></p>
+          <p class="small soft"><code>seed_demo</code> cria 3 projetos e 12 tarefas com prazos relativos ao dia de hoje: sempre há atrasadas, próximas, sem prazo e vindas de IA.</p>
+          <p class="small">Requisitos: Python 3.12+, Node.js 22.22.2+ ou 24.15+, Git. Chave da Anthropic é opcional.</p>
+          <p class="small">Passo a passo completo, roteiro de teste manual e solução de problemas no <code>README.md</code>:<br><a href="https://github.com/tutikobi/painel-de-projetos">github.com/tutikobi/painel-de-projetos</a></p>
+        </div>
+        <div class="text">
+<pre class="terminal"><span class="c"># terminal 1 — backend (porta 8000)</span>
+<span class="t">cd</span> backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1   <span class="c"># Linux/macOS: source .venv/bin/activate</span>
+pip install -r requirements-dev.txt
+python manage.py migrate
+python manage.py seed_demo
+python manage.py runserver 127.0.0.1:8000</pre>
+<pre class="terminal"><span class="c"># terminal 2 — frontend (porta 5173)</span>
+<span class="t">cd</span> frontend
+npm ci
+npm run dev
+<span class="c"># abrir http://localhost:5173</span></pre>
+        </div>
+      </div>
+      <span class="slide-num">20 / 20</span>
+    </section>
+
+  </div>
+</main>
+
+<script>
+  (function () {
+    var deck = document.getElementById("deck");
+    var slides = Array.prototype.slice.call(deck.querySelectorAll(".slide"));
+    var counter = document.getElementById("counter");
+    var bar = document.getElementById("bar");
+    var modeButton = document.getElementById("mode");
+    var total = slides.length;
+    var index = 0;
+    var paged = true;
+    var narrow = window.matchMedia("(max-width: 800px)");
+
+    function fromHash() {
+      var n = parseInt((location.hash || "").replace("#", ""), 10);
+      return n >= 1 && n <= total ? n - 1 : 0;
+    }
+
+    function render() {
+      slides.forEach(function (slide, i) {
+        slide.classList.toggle("active", i === index);
+      });
+      deck.classList.toggle("paged", paged);
+      counter.textContent = (index + 1) + " / " + total;
+      bar.style.width = ((index + 1) / total) * 100 + "%";
+      modeButton.textContent = paged ? "Ver todos" : "Modo apresentação";
+      document.getElementById("prev").disabled = index === 0;
+      document.getElementById("next").disabled = index === total - 1;
+    }
+
+    function go(i) {
+      index = Math.max(0, Math.min(total - 1, i));
+      try { history.replaceState(null, "", "#" + (index + 1)); } catch (e) {}
+      render();
+      if (!paged) slides[index].scrollIntoView({ block: "start" });
+    }
+
+    document.getElementById("prev").addEventListener("click", function () { go(index - 1); });
+    document.getElementById("next").addEventListener("click", function () { go(index + 1); });
+    modeButton.addEventListener("click", function () {
+      paged = !paged;
+      render();
+      if (!paged) slides[index].scrollIntoView({ block: "start" });
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      var key = event.key;
+      if (key === "ArrowRight" || key === "PageDown" || (key === " " && paged)) { event.preventDefault(); go(index + 1); }
+      else if (key === "ArrowLeft" || key === "PageUp") { event.preventDefault(); go(index - 1); }
+      else if (key === "Home") { event.preventDefault(); go(0); }
+      else if (key === "End") { event.preventDefault(); go(total - 1); }
+    });
+
+    function applyWidth() {
+      paged = !narrow.matches;
+      render();
+    }
+    if (narrow.addEventListener) narrow.addEventListener("change", applyWidth);
+    window.addEventListener("hashchange", function () {
+      if (fromHash() !== index) go(fromHash());
+    });
+
+    index = fromHash();
+    applyWidth();
+  })();
+</script>
+</body>
+</html>

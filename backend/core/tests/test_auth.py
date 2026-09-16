@@ -97,6 +97,7 @@ def test_invalid_bearer_token_returns_401(anon_client):
         ("post", "/api/tasks/"),
         ("patch", "/api/tasks/1/"),
         ("delete", "/api/tasks/1/"),
+        ("get", "/api/ai/status/"),
         ("post", "/api/ai/breakdown/"),
         ("post", "/api/ai/breakdown/confirm/"),
     ],

@@ -164,6 +164,7 @@ export const api = {
     apiRequest(`/tasks/${id}/`, { method: "PATCH", body: changes }),
   deleteTask: (id) => apiRequest(`/tasks/${id}/`, { method: "DELETE" }),
 
+  aiStatus: () => apiRequest("/ai/status/"),
   suggestSubtasks: (projectId, goalText, signal) =>
     apiRequest("/ai/breakdown/", {
       method: "POST",

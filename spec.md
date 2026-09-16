@@ -54,7 +54,8 @@ Como usuário, quero fazer login para acessar meus próprios projetos e tarefas,
 - Duas tarefas com o mesmo prazo exato → ordenação por prazo empata pela ordem de criação (mais antiga primeiro), sem necessidade de critério adicional.
 - Prazo de tarefa no passado ao ser criada (não só ao vencer depois) → sistema permite (pode ser um registro retroativo), apenas destaca visualmente como atrasada.
 - Meta para a IA com mais de 1000 caracteres → rejeitada antes de chamar a IA, como a meta vazia. *(adicionado na implementação)*
-- IA não configurada no servidor (sem chave) ou recusando a meta → mesmo tratamento de "chamada à IA falhou" da H4. *(adicionado na implementação)*
+- IA recusando a meta → mesmo tratamento de "chamada à IA falhou" da H4. *(adicionado na implementação)*
+- Chave da API do Claude não cadastrada no servidor → toda ação de IA mostra o aviso específico "chave da API do Claude não cadastrada, por isso não é possível executar esta ação", em vez da mensagem genérica de falha. O aviso aparece ao abrir o painel de IA, antes de o usuário digitar a meta, e o botão de pedir sugestões fica desabilitado. O resto do sistema segue funcionando normalmente. *(adicionado após a primeira entrega, a pedido do autor)*
 - Tarefa atrasada que é concluída deixa de ser destacada como atrasada. *(adicionado na implementação)*
 
 ## Fora de escopo (explícito)

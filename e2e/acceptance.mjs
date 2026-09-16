@@ -227,12 +227,43 @@ try {
   await page.locator(".task-title", { hasText: "Tarefa futura" }).waitFor();
   check("H3: mudança no kanban aparece na visão central sem recarregar", true);
 
-  // H4 — IA: validação, falha e fluxo principal intacto
+  // H4 — IA sem chave: aviso específico com o servidor real
   await sidebarProject("TCC").click();
-  await page.getByRole("button", { name: "Quebrar meta com IA" }).click();
   const panel = page.getByRole("dialog", { name: "Quebrar meta com IA" });
+  const statusResponse = page.waitForResponse((r) =>
+    r.url().includes("/api/ai/status/"),
+  );
+  await page.getByRole("button", { name: "Quebrar meta com IA" }).click();
+  const { configured } = await (await statusResponse).json();
+  if (configured) {
+    console.log(
+      "INFO servidor com ANTHROPIC_API_KEY: aviso de chave não verificado",
+    );
+  } else {
+    const warning = panel.getByRole("alert");
+    await warning.waitFor();
+    check(
+      "H4: sem chave, avisa que a chave do Claude não está cadastrada",
+      (await warning.textContent()).includes(
+        "Chave da API do Claude não cadastrada",
+      ) &&
+        (await panel
+          .getByRole("button", { name: "Sugerir subtarefas" })
+          .isDisabled()),
+    );
+    await screenshot(page, "05-ia-sem-chave");
+  }
+  await panel.getByRole("button", { name: "Fechar" }).click();
+
+  // H4 — daqui em diante a IA é simulada como disponível, para o roteiro
+  // não depender de chave nem de rede.
+  await page.route("**/api/ai/status/", (route) =>
+    route.fulfill({ json: { configured: true } }),
+  );
+  await page.getByRole("button", { name: "Quebrar meta com IA" }).click();
+  await panel.getByRole("button", { name: "Sugerir subtarefas" }).waitFor();
   const aiCallCount = () =>
-    apiCalls.filter((c) => c.includes("/api/ai/")).length;
+    apiCalls.filter((c) => c.includes("/api/ai/breakdown")).length;
 
   const aiCallsBefore = aiCallCount();
   await panel.getByRole("button", { name: "Sugerir subtarefas" }).click();
