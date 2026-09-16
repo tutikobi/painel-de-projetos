@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client.js";
+import {
+  AI_NOT_CONFIGURED_CODE,
+  AI_NOT_CONFIGURED_TEXT,
+  AI_NOT_CONFIGURED_TITLE,
+} from "../constants/ai.js";
+import { useAiStatus } from "../hooks/useAiStatus.js";
 import { useEscapeKey } from "../hooks/useEscapeKey.js";
 import ErrorAlert from "./ErrorAlert.jsx";
+import WarningAlert from "./WarningAlert.jsx";
 import GoalForm from "./breakdown/GoalForm.jsx";
 import SuggestionReview from "./breakdown/SuggestionReview.jsx";
 import {
@@ -28,6 +35,8 @@ export default function TaskBreakdownModal({
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const abortRef = useRef(null);
+  const [aiStatus, setAiStatus] = useAiStatus();
+  const aiUnavailable = aiStatus === "not_configured";
 
   useEffect(() => () => abortRef.current?.abort(), []);
   useEscapeKey(close);
@@ -38,6 +47,7 @@ export default function TaskBreakdownModal({
   }
 
   async function requestSuggestions() {
+    if (aiUnavailable) return;
     if (!Number(projectId)) {
       setError("Escolha o projeto da meta.");
       return;
@@ -62,8 +72,13 @@ export default function TaskBreakdownModal({
       setStep("review");
     } catch (err) {
       if (err.name === "AbortError") return;
-      setError(err.message);
       setStep("input");
+      // A chave pode ter sido removida depois que o painel abriu.
+      if (err.data?.code === AI_NOT_CONFIGURED_CODE) {
+        setAiStatus("not_configured");
+      } else {
+        setError(err.message);
+      }
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
@@ -119,6 +134,12 @@ export default function TaskBreakdownModal({
         </button>
       </header>
 
+      {aiUnavailable && (
+        <WarningAlert title={AI_NOT_CONFIGURED_TITLE}>
+          {AI_NOT_CONFIGURED_TEXT}
+        </WarningAlert>
+      )}
+
       {step === "review" ? (
         <SuggestionReview
           items={items}
@@ -135,6 +156,7 @@ export default function TaskBreakdownModal({
           goal={goal}
           onGoalChange={setGoal}
           loading={step === "loading"}
+          disabled={aiUnavailable}
           onSubmit={requestSuggestions}
           onCancel={cancelRequest}
         />

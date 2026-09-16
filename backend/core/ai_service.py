@@ -76,21 +76,30 @@ class AIServiceError(Exception):
     """
 
 
+class AINotConfiguredError(AIServiceError):
+    """A chave da API não está cadastrada no servidor; nenhuma chamada foi feita."""
+
+
 @dataclass(frozen=True)
 class SuggestedTask:
     title: str
     due_date: date | None
 
 
-def _get_client():
+def is_configured() -> bool:
     # A chave vem só do ambiente, nunca de settings (plan: Serviço de IA).
-    # Sem ela o SDK falharia com TypeError na requisição; aqui vira erro tratado.
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
+    return bool(os.environ.get("ANTHROPIC_API_KEY", "").strip())
+
+
+def _get_client():
+    # Sem a chave o SDK falharia com TypeError na requisição; aqui vira erro tratado.
+    if not is_configured():
         logger.warning("IA indisponível: ANTHROPIC_API_KEY não configurada")
-        raise AIServiceError("ANTHROPIC_API_KEY não configurada.")
+        raise AINotConfiguredError("ANTHROPIC_API_KEY não configurada.")
     return anthropic.Anthropic(
-        api_key=api_key, timeout=settings.AI_TIMEOUT_SECONDS, max_retries=1
+        api_key=os.environ["ANTHROPIC_API_KEY"].strip(),
+        timeout=settings.AI_TIMEOUT_SECONDS,
+        max_retries=1,
     )
 
 

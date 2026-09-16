@@ -26,6 +26,11 @@ AI_ERROR_MESSAGE = (
     "Não foi possível gerar sugestões agora. Tente novamente em instantes "
     "ou crie as tarefas manualmente."
 )
+AI_NOT_CONFIGURED_CODE = "ai_not_configured"
+AI_NOT_CONFIGURED_MESSAGE = (
+    "Chave da API do Claude não cadastrada no servidor. Por isso não é "
+    "possível executar esta ação de IA. As demais funções seguem disponíveis."
+)
 VALID_STATUSES = {choice for choice, _ in Task.STATUS_CHOICES}
 
 
@@ -89,6 +94,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         return queryset.order_by(F("due_date").asc(nulls_last=True), "created_at", "id")
 
 
+class AIStatusView(APIView):
+    """Informa só se a IA pode ser usada; nunca revela a chave."""
+
+    def get(self, request):
+        return Response({"configured": ai_service.is_configured()})
+
+
 class BreakdownView(APIView):
     """Só sugere: nada é gravado aqui (spec H4)."""
 
@@ -102,6 +114,11 @@ class BreakdownView(APIView):
         try:
             suggestions = ai_service.suggest_subtasks(
                 serializer.validated_data["goal_text"], today=timezone.localdate()
+            )
+        except ai_service.AINotConfiguredError:
+            return Response(
+                {"detail": AI_NOT_CONFIGURED_MESSAGE, "code": AI_NOT_CONFIGURED_CODE},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except ai_service.AIServiceError:
             return Response(

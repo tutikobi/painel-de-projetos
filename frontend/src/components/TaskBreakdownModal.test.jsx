@@ -6,7 +6,11 @@ import { deferred, makeProject } from "../test/fixtures.js";
 import TaskBreakdownModal from "./TaskBreakdownModal.jsx";
 
 vi.mock("../api/client.js", () => ({
-  api: { suggestSubtasks: vi.fn(), confirmSubtasks: vi.fn() },
+  api: {
+    aiStatus: vi.fn(),
+    suggestSubtasks: vi.fn(),
+    confirmSubtasks: vi.fn(),
+  },
 }));
 
 const projects = [
@@ -38,6 +42,7 @@ async function askForSuggestions(
 beforeEach(() => {
   vi.mocked(api.suggestSubtasks).mockReset();
   vi.mocked(api.confirmSubtasks).mockReset();
+  vi.mocked(api.aiStatus).mockReset().mockResolvedValue({ configured: true });
 });
 
 describe("TaskBreakdownModal (spec H4)", () => {
@@ -186,5 +191,60 @@ describe("TaskBreakdownModal (spec H4)", () => {
     await user.click(screen.getByRole("button", { name: "Fechar" }));
 
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  describe("sem chave da API do Claude", () => {
+    it("avisa ao abrir e não deixa pedir sugestões", async () => {
+      const user = userEvent.setup();
+      api.aiStatus.mockResolvedValue({ configured: false });
+      renderPanel();
+
+      const warning = await screen.findByRole("alert");
+      expect(warning).toHaveTextContent(
+        "Chave da API do Claude não cadastrada",
+      );
+      expect(warning).toHaveTextContent(
+        "Por isso não é possível executar esta ação de IA.",
+      );
+      const submit = screen.getByRole("button", { name: "Sugerir subtarefas" });
+      expect(submit).toBeDisabled();
+
+      await user.type(screen.getByLabelText("Meta"), "Escrever capítulo 3");
+      await user.click(submit);
+      expect(api.suggestSubtasks).not.toHaveBeenCalled();
+    });
+
+    it("mostra o mesmo aviso se a API responder que a chave sumiu", async () => {
+      const user = userEvent.setup();
+      api.suggestSubtasks.mockRejectedValue(
+        Object.assign(new Error("Chave da API do Claude não cadastrada..."), {
+          status: 503,
+          data: { code: "ai_not_configured" },
+        }),
+      );
+      renderPanel();
+
+      await askForSuggestions(user);
+
+      const warning = await screen.findByRole("alert");
+      expect(warning).toHaveTextContent(
+        "Chave da API do Claude não cadastrada",
+      );
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+      expect(
+        screen.getByRole("button", { name: "Sugerir subtarefas" }),
+      ).toBeDisabled();
+    });
+
+    it("não bloqueia se a consulta de status falhar", async () => {
+      const user = userEvent.setup();
+      api.aiStatus.mockRejectedValue(new Error("Sem conexão com o servidor."));
+      api.suggestSubtasks.mockReturnValue(new Promise(() => {}));
+      renderPanel();
+
+      await askForSuggestions(user);
+
+      expect(api.suggestSubtasks).toHaveBeenCalled();
+    });
   });
 });

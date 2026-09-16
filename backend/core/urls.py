@@ -3,6 +3,7 @@ from rest_framework.routers import SimpleRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
+    AIStatusView,
     BreakdownConfirmView,
     BreakdownView,
     ProjectViewSet,
@@ -18,6 +19,7 @@ urlpatterns = [
     path("auth/register/", RegisterView.as_view(), name="register"),
     path("auth/login/", TokenObtainPairView.as_view(), name="login"),
     path("auth/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("ai/status/", AIStatusView.as_view(), name="ai-status"),
     path("ai/breakdown/", BreakdownView.as_view(), name="ai-breakdown"),
     path(
         "ai/breakdown/confirm/",

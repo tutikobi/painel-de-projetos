@@ -176,9 +176,16 @@ def test_unusable_stop_reason_becomes_502(auth_client, project, fake_ai, stop_re
     assert response.status_code == 502
 
 
-def test_missing_api_key_becomes_502(auth_client, project, monkeypatch):
+@pytest.mark.parametrize("key", [None, "", "   "])
+def test_missing_api_key_returns_specific_warning(
+    auth_client, project, monkeypatch, key, caplog
+):
     # Usa o _get_client real: nenhuma requisição sai sem a chave.
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    if key is None:
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    else:
+        monkeypatch.setenv("ANTHROPIC_API_KEY", key)
+    caplog.set_level(logging.DEBUG)
 
     response = auth_client.post(
         "/api/ai/breakdown/",
@@ -186,7 +193,45 @@ def test_missing_api_key_becomes_502(auth_client, project, monkeypatch):
         format="json",
     )
 
-    assert response.status_code == 502
+    assert response.status_code == 503
+    assert response.data["code"] == "ai_not_configured"
+    assert "Chave da API do Claude não cadastrada" in response.data["detail"]
+    assert Task.objects.count() == 0
+    assert GOAL not in caplog.text
+
+
+def test_blank_goal_is_rejected_even_without_api_key(auth_client, project, monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    response = auth_client.post(
+        "/api/ai/breakdown/",
+        {"project_id": project.id, "goal_text": "  "},
+        format="json",
+    )
+
+    assert response.status_code == 400
+
+
+# ---------- /api/ai/status/ ----------
+
+
+@pytest.mark.parametrize(
+    "key, configured", [("sk-ant-teste", True), ("", False), (None, False)]
+)
+def test_ai_status_reports_only_whether_key_exists(
+    auth_client, monkeypatch, key, configured
+):
+    if key is None:
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    else:
+        monkeypatch.setenv("ANTHROPIC_API_KEY", key)
+
+    response = auth_client.get("/api/ai/status/")
+
+    assert response.status_code == 200
+    assert response.data == {"configured": configured}
+    if key:
+        assert key not in response.content.decode()
 
 
 def test_manual_task_creation_still_works_after_ai_failure(

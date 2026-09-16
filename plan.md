@@ -59,7 +59,8 @@ class Task(models.Model):
 | POST | `/api/tasks/` | Cria tarefa manual (`source` é sempre `manual`, mesmo se o cliente mandar outro valor) |
 | PATCH | `/api/tasks/{id}/` | Edita status, prazo, título e projeto. O projeto de destino precisa ser do usuário (H5). PUT não é aceito |
 | DELETE | `/api/tasks/{id}/` | Exclui tarefa |
-| POST | `/api/ai/breakdown/` | Recebe `{project_id, goal_text}` (meta de 1 a 1000 caracteres), chama o provedor de IA e retorna `{project_id, suggestions: [{title, due_date}]}` (**não grava nada**). Falha da IA: 502 com mensagem genérica |
+| GET | `/api/ai/status/` | Responde `{configured: true/false}`: diz só **se** a chave existe, nunca qual é. O painel de IA consulta ao abrir, para avisar antes de o usuário digitar |
+| POST | `/api/ai/breakdown/` | Recebe `{project_id, goal_text}` (meta de 1 a 1000 caracteres), chama o provedor de IA e retorna `{project_id, suggestions: [{title, due_date}]}` (**não grava nada**). Sem chave: 503 com `code: "ai_not_configured"` e o aviso de chave não cadastrada. Outras falhas da IA: 502 com mensagem genérica |
 | POST | `/api/ai/breakdown/confirm/` | Recebe `{project_id, tasks: [{title, due_date}]}` (1 a 50 itens) e grava tudo numa transação com `source="ai"` |
 
 Todas as rotas terminam em `/` (padrão do Django; sem a barra, um POST não é redirecionado). Cada tarefa devolvida pela API inclui `project_name`, `project_color` e `is_overdue`, e assim a H2 monta a tela inteira com uma chamada só. Projeto ou tarefa de outro usuário responde 404 (ou 400 quando usado como destino), sem revelar que existe.
@@ -75,7 +76,8 @@ A separação entre `breakdown` (sugestão) e `breakdown/confirm` (gravação) i
 - Só a meta é enviada ao provedor: nome e descrição do projeto não saem do backend.
 - Logs registram só o tipo da falha (ex.: `APITimeoutError`) e a quantidade de sugestões; nunca a meta nem a resposta.
 - `try/except` em volta da chamada e do parse do JSON — qualquer falha vira um erro tratado (HTTP 502 com mensagem genérica pro frontend), nunca uma subtarefa inventada a partir de um parse malsucedido. Implementa o requisito de robustez da constituição/spec.
-- Chave de API lida de variável de ambiente (`ANTHROPIC_API_KEY`), nunca hardcoded, nunca em `settings.py` versionado. Sem a chave, o serviço devolve o mesmo erro tratado (502): o SDK só lançaria `TypeError` na hora da requisição, o que viraria erro 500.
+- Chave de API lida de variável de ambiente (`ANTHROPIC_API_KEY`), nunca hardcoded, nunca em `settings.py` versionado. Sem a chave, o serviço lança `AINotConfiguredError` antes de qualquer chamada, e a view responde 503 com o aviso específico. Sem essa verificação, o SDK só lançaria `TypeError` na hora da requisição, o que viraria erro 500.
+- A consulta `/api/ai/status/` evita que o usuário escreva uma meta para só então descobrir que a IA não está disponível. O `503` do `breakdown` continua como garantia, caso a chave seja removida com a tela já aberta.
 
 ## Frontend (React)
 

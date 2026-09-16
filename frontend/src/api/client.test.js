@@ -102,6 +102,21 @@ describe("apiRequest", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
+  it("expõe o corpo do erro para códigos específicos", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(503, {
+        detail: "Chave não cadastrada",
+        code: "ai_not_configured",
+      }),
+    );
+
+    await expect(api.suggestSubtasks(1, "meta")).rejects.toMatchObject({
+      status: 503,
+      message: "Chave não cadastrada",
+      data: { code: "ai_not_configured" },
+    });
+  });
+
   it("devolve null em 204", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
 

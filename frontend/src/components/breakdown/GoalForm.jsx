@@ -5,6 +5,7 @@ export default function GoalForm({
   goal,
   onGoalChange,
   loading,
+  disabled = false,
   onSubmit,
   onCancel,
 }) {
@@ -56,7 +57,7 @@ export default function GoalForm({
           </button>
         </div>
       ) : (
-        <button type="submit" className="button">
+        <button type="submit" className="button" disabled={disabled}>
           Sugerir subtarefas
         </button>
       )}
