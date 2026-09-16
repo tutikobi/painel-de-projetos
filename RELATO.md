@@ -5,8 +5,9 @@
 Todas as histórias da spec (H1–H6), os requisitos não funcionais e os casos extremos.
 
 - **Backend** (`backend/`): Django 6.1 + DRF, autenticação JWT, `ProjectViewSet`, `TaskViewSet`, `ai_service.py` e os dois endpoints de IA. Testes: **89 com pytest-django**, com a IA sempre simulada. Cobrem caminho feliz, 401 sem token, acesso a dado de outro usuário, respostas malformadas da IA, falha de rede, recusa, chave ausente e ausência de dado sensível nos logs.
-- **Frontend** (`frontend/`): React 19 + Vite, login/cadastro, visão central com seções "Atrasadas / Com prazo / Sem prazo", kanban com drag-and-drop, painel de quebra de meta com IA, cadastro e exclusão de projetos.
-- **Verificação no navegador (T3.1):** um roteiro automatizado com Edge + Playwright (mantido fora do repositório, pois o frontend não exige testes automatizados) conferiu 22 critérios de aceitação na interface real. Exemplos: projeto aparece no seletor sem recarregar, atrasada no topo e destacada, uma só chamada de lista na H2, concluída some das pendências e aparece em "Concluído", arrastar o card faz PATCH e reflete na visão central, meta vazia não chama a API, erro de IA claro com criação manual ainda funcionando, nada gravado antes de "Adicionar ao projeto", mensagem "Este projeto tem N tarefas", sem rolagem horizontal em 400 px. Sem erros no console.
+- **Frontend** (`frontend/`): React 19 + Vite, login/cadastro, visão central com seções "Atrasadas / Com prazo / Sem prazo", kanban com drag-and-drop, painel de quebra de meta com IA, cadastro e exclusão de projetos. Organizado em páginas, componentes pequenos, hooks e funções puras (ver `plan.md`, "Organização do frontend"). Testes: **74 com Vitest + Testing Library**, além de ESLint e Prettier.
+- **Aceitação no navegador (T3.1):** `e2e/acceptance.mjs` controla Chrome ou Edge e confere **23 critérios** na interface real. Exemplos: projeto aparece no seletor sem recarregar, atrasada no topo e destacada, uma só chamada de lista na H2, concluída some das pendências e aparece em "Concluído", arrastar o card grava no backend e reflete na visão central, meta vazia não chama a IA, erro de IA claro com criação manual ainda funcionando, nada gravado antes de "Adicionar ao projeto", mensagem "Este projeto tem N tarefas", sem rolagem horizontal em 400 px, sem erros no console.
+- **CI:** GitHub Actions roda tudo isso a cada push.
 
 ## O que ficou de fora e por quê
 
@@ -28,5 +29,6 @@ A regra da T3.2 é atualizar spec e plano **antes** de seguir. Na prática, as m
 6. **Critérios novos na spec:** cadastro (H6), mover tarefa só para projeto próprio (H5), meta com mais de 1000 caracteres, IA não configurada, atrasada concluída deixa de ser destacada.
 7. **`tasks.md`:** T2.7 (UI de projetos) e T2.8 (UI de editar/concluir) adicionadas, porque nenhuma tarefa de frontend cobria H1 e H5. A contagem do checklist foi corrigida de 8 para 7.
 8. **Descoberta técnica:** sem a chave, o SDK da Anthropic lança `TypeError` (e não um erro próprio do SDK) na hora da requisição, o que viraria erro 500. O serviço agora verifica a chave antes e devolve o 502 tratado. Há teste para isso.
+9. **Revisão de qualidade após a primeira entrega (T3.4):** três telas tinham entre 200 e 270 linhas misturando dados, estado e marcação. Foram divididas em componentes (`TaskRow`, `TaskSection`, `kanban/*`, `breakdown/*`…), no hook `useTasks` e em funções puras. Os testes novos acharam um bug: quando concluir uma tarefa falhava, o recarregamento da lista apagava a mensagem de erro antes de o usuário vê-la. Corrigido.
 
 Detalhes da revisão dos artefatos: `ANALISE.md`.

@@ -91,7 +91,18 @@ A separação entre `breakdown` (sugestão) e `breakdown/confirm` (gravação) i
 ## Testes
 
 - Backend: `pytest-django`. Cobertura mínima conforme constituição: criar/editar/excluir projeto e tarefa, e o fluxo de `breakdown` com a chamada de IA mockada (nunca bater na API real nos testes).
-- Frontend: testes manuais guiados no relato final (não há exigência de cobertura automatizada de frontend na constituição atual). Na implementação, esse roteiro foi executado em navegador real (Edge + Playwright, fora do repositório; ver `RELATO.md`).
+- Frontend: a constituição não exige testes automatizados de frontend, mas eles foram adicionados porque os critérios da spec são de interface:
+  - **Unitários e de componentes** (`vitest` + Testing Library, em `frontend/src/**/*.test.*`): funções puras, cliente HTTP (renovação de token, mensagens de erro), hooks e comportamento visível de formulários, painel de IA e páginas, com a API sempre simulada.
+  - **Aceitação no navegador** (`e2e/acceptance.mjs`, `playwright-core` com Chrome ou Edge já instalado): percorre os critérios H1–H6 contra backend e frontend reais. A resposta da IA é simulada para o roteiro não depender de chave nem de rede.
+- **Qualidade contínua**: GitHub Actions (`.github/workflows/ci.yml`) roda, a cada push, `black --check`, verificação de migrations pendentes, `pytest`, `eslint`, `prettier --check`, `vitest`, build e o roteiro de aceitação.
+
+## Organização do frontend
+
+- `pages/`: telas ligadas a rotas. Orquestram dados e ações; quase não têm marcação própria.
+- `components/`: peças visuais reutilizáveis (`TaskRow`, `TaskSection`, `TaskForm`, `TaskEditor`, `ErrorAlert`…), com subpastas por funcionalidade (`kanban/`, `breakdown/`).
+- `hooks/`: `useTasks` concentra carregar e atualizar listas de tarefas (com descarte de respostas atrasadas e atualização otimista com reversão); `useEscapeKey`.
+- `utils/` e `constants/`: regras puras e testáveis sem React (agrupamento das seções da H2, tradução do arraste em mudança de status, mensagem de exclusão).
+- `api/client.js`: único ponto que conversa com a API.
 
 ## Dependências (justificativa exigida pela constituição)
 
@@ -107,5 +118,9 @@ A separação entre `breakdown` (sugestão) e `breakdown/confirm` (gravação) i
 | `@hello-pangea/dnd` | frontend | Drag-and-drop do kanban (H3) |
 | `vite`, `@vitejs/plugin-react` | frontend (dev) | Build e servidor de desenvolvimento (já previstos na T2.1); o proxy substitui o CORS |
 | `prettier` | frontend (dev) | Formatação exigida pela constituição |
+| `eslint`, `@eslint/js`, `eslint-plugin-react-hooks`, `globals` | frontend (dev) | Lint: pega erros comuns de JavaScript e uso incorreto de hooks (dependências de efeito, `setState` em efeito) |
+| `vitest`, `jsdom` | frontend (dev) | Executor de testes integrado ao Vite, sem configuração de build separada |
+| `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom` | frontend (dev) | Testes de componente guiados pelo que o usuário vê e faz (rótulos, papéis, cliques) |
+| `playwright-core` | e2e (dev) | Controla um navegador já instalado no roteiro de aceitação, sem baixar navegadores |
 
 Removida em relação à T1.1: `django-cors-headers` (substituída pelo proxy do Vite).

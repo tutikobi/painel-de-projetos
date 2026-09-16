@@ -41,3 +41,4 @@ Cada tarefa referencia a história/seção da spec que ela implementa. Ordem sug
 - [x] T3.1 — Revisar cada tarefa marcada como concluída contra o critério de aceitação correspondente na spec (não só "rodou sem erro").
 - [x] T3.2 — Se algo mudou de ideia no meio da implementação, **voltar e atualizar `spec.md`/`plan.md` antes** de seguir (regra da fase 4 — nada de patch silencioso no código).
 - [x] T3.3 — Escrever `RELATO.md` de uma página: o que foi implementado, o que ficou de fora do escopo original e por quê, e onde a spec mudou durante a implementação.
+- [x] T3.4 — Revisão de qualidade: componentizar as páginas do frontend, adicionar lint e testes automatizados de frontend, versionar o roteiro de aceitação e configurar CI. *(constituição: padrões de código e teste)* — *adicionada após a primeira entrega*
