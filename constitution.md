@@ -11,7 +11,8 @@ Princípios não negociáveis do projeto. Válidos para todas as fases seguintes
 
 ## Segurança e privacidade
 
-- Toda rota da API exige autenticação, exceto login/registro. Não existe "modo anônimo".
+- Toda rota da API exige autenticação, exceto login, registro e renovação de token (esta última exige um refresh token válido, que é em si uma credencial). Não existe "modo anônimo".
+  - *Emenda (implementação): a renovação de token foi incluída na exceção. Sem ela, o JWT de acesso teria de ter vida longa ou o usuário faria login a cada 30 minutos.*
 - Nomes de clientes, contatos e qualquer dado de projeto real (ex.: nomes de empresas, e-mails de contato) nunca aparecem em logs de aplicação, nem em mensagens de erro devolvidas ao frontend.
 - A chave de API do provedor de IA usada para quebrar metas em subtarefas nunca é exposta ao frontend — toda chamada à IA passa pelo backend.
 - Senhas seguem o hashing padrão do Django; nenhuma senha ou token é armazenado em texto plano em lugar nenhum (banco, log, arquivo).
