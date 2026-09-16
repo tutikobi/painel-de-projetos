@@ -16,3 +16,5 @@ dist/
 .idea/
 .DS_Store
 Thumbs.db
+.vite/
+e2e/screenshots/

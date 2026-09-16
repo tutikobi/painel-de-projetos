@@ -1,0 +1,13 @@
+{
+  "name": "painel-de-projetos-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Roteiro de aceitação no navegador (spec H1-H6) contra backend e frontend em execução",
+  "scripts": {
+    "test": "node acceptance.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

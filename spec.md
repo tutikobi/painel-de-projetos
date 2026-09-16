@@ -31,10 +31,13 @@ Como usuário, quero digitar uma meta grande em texto livre (ex.: "escrever cap�
 ### H5 — Concluir e editar tarefas
 Como usuário, quero marcar uma tarefa como concluída e editar seu texto/prazo/projeto a qualquer momento.
 - Critério: tarefa concluída some da visão central de pendências (H2) mas continua visível dentro do kanban do projeto na coluna "Concluído".
+- Critério: uma tarefa só pode ser movida para um projeto do próprio usuário; tentar movê-la para projeto de outra pessoa é rejeitado sem alterar nada. *(adicionado na implementação)*
 
 ### H6 — Autenticação
 Como usuário, quero fazer login para acessar meus próprios projetos e tarefas, e ter certeza de que ninguém mais vê meus dados.
 - Critério: toda rota de projeto/tarefa exige usuário autenticado; tentativa sem autenticação retorna 401, nunca expõe dado de outro usuário.
+- Critério: o cadastro exige nome de usuário único e uma senha que passe nas regras padrão (mínimo de 8 caracteres, não só números, não comum); a mensagem de erro diz qual regra falhou. *(adicionado na implementação)*
+- Critério: a sessão vive só enquanto a aba está aberta; recarregar a página pede login de novo. É consequência direta da regra da constituição de não armazenar token em texto plano. *(adicionado na implementação)*
 
 ## Requisitos não funcionais
 
@@ -50,6 +53,9 @@ Como usuário, quero fazer login para acessar meus próprios projetos e tarefas,
 - Usuário exclui um projeto que tem tarefas — comportamento: exclusão em cascata das tarefas daquele projeto, com uma confirmação explícita antes ("Este projeto tem N tarefas. Excluir mesmo assim?").
 - Duas tarefas com o mesmo prazo exato → ordenação por prazo empata pela ordem de criação (mais antiga primeiro), sem necessidade de critério adicional.
 - Prazo de tarefa no passado ao ser criada (não só ao vencer depois) → sistema permite (pode ser um registro retroativo), apenas destaca visualmente como atrasada.
+- Meta para a IA com mais de 1000 caracteres → rejeitada antes de chamar a IA, como a meta vazia. *(adicionado na implementação)*
+- IA não configurada no servidor (sem chave) ou recusando a meta → mesmo tratamento de "chamada à IA falhou" da H4. *(adicionado na implementação)*
+- Tarefa atrasada que é concluída deixa de ser destacada como atrasada. *(adicionado na implementação)*
 
 ## Fora de escopo (explícito)
 
@@ -59,6 +65,8 @@ Como usuário, quero fazer login para acessar meus próprios projetos e tarefas,
 - Relatórios/analytics de produtividade.
 
 ## Suposições em aberto (marcadas como perguntas, não fatos)
+
+> Status após a implementação: as duas suposições abaixo foram confirmadas como decisões (Anthropic; data absoluta).
 
 - Qual provedor de LLM será usado na chamada da H4 (API da Anthropic, OpenAI, outro)? — assumido neste plano: API da Anthropic (Claude), por ser o que o autor já usa; pode ser trocado sem impacto no restante da spec, já que é um detalhe de implementação isolado num único serviço no backend.
 - O prazo sugerido pela IA é uma data absoluta ou um prazo relativo ("em 3 dias")? — assumido: data absoluta, calculada pelo backend a partir da data de criação da meta, para simplificar a interface.
