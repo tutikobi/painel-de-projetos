@@ -421,7 +421,7 @@
   <div class="deck paged" id="deck">
 
     <!-- 1 -->
-    <section class="slide cover active" aria-label="Capa">
+    <section class="slide cover active" aria-label="Capa" data-short>
       <div class="split">
         <div class="text">
           <p class="eyebrow">Projeto de disciplina · spec-driven development</p>
@@ -442,7 +442,7 @@
     </section>
 
     <!-- 2 -->
-    <section class="slide" aria-label="O problema">
+    <section class="slide" aria-label="O problema" data-short>
       <p class="eyebrow">O problema</p>
       <p class="quote">“Às vezes eu só lembro que tinha prazo quando já tá em cima.”</p>
       <p class="lede">Quem toca freelas, mestrado e artigos ao mesmo tempo tem as pendências espalhadas em memória, chat e e-mail, sem uma visão única do que está atrasado. <span class="soft small">(do rascunho inicial, <code>00_prompt-inicial.md</code>)</span></p>
@@ -460,7 +460,7 @@
     </section>
 
     <!-- 3 -->
-    <section class="slide" aria-label="Como foi construído">
+    <section class="slide" aria-label="Como foi construído" data-short>
       <p class="eyebrow">Como foi construído</p>
       <h2>Primeiro a intenção, depois o código</h2>
       <ol class="flow row">
@@ -495,7 +495,7 @@
     </section>
 
     <!-- 4 -->
-    <section class="slide" aria-label="Arquitetura">
+    <section class="slide" aria-label="Arquitetura" data-short>
       <p class="eyebrow">Arquitetura</p>
       <h2>Duas partes que rodam juntas</h2>
       <div class="arch">
@@ -578,7 +578,7 @@
     </section>
 
     <!-- 7 -->
-    <section class="slide" aria-label="Visão central">
+    <section class="slide" aria-label="Visão central" data-short>
       <div class="split">
         <div class="text">
           <p class="eyebrow"><span class="story">H2</span>Visão central</p>
@@ -588,6 +588,7 @@
             <li>Ordem por prazo, da mais urgente para a menos urgente. Empate: a mais antiga primeiro.</li>
             <li><strong>Exemplo:</strong> “Revisar bibliografia do capítulo 2” venceu em 13/09 e aparece no topo, com borda vermelha e selo “Atrasada”.</li>
             <li>A tela inteira vem de <strong>uma chamada</strong>: <code>GET /api/tasks/?status=todo,doing</code>, e não uma por projeto.</li>
+            <li data-only="curta">Na mesma tela: criar projeto na barra lateral (H1), criar tarefa com prazo e projeto, concluir na caixinha e editar título, prazo ou projeto (H5).</li>
           </ul>
         </div>
         <figure class="shot">
@@ -618,7 +619,7 @@
     </section>
 
     <!-- 9 -->
-    <section class="slide" aria-label="Kanban">
+    <section class="slide" aria-label="Kanban" data-short>
       <div class="split">
         <div class="text">
           <p class="eyebrow"><span class="story">H3</span>Kanban por projeto</p>
@@ -639,7 +640,7 @@
     </section>
 
     <!-- 10 -->
-    <section class="slide" aria-label="O que a IA faz">
+    <section class="slide" aria-label="O que a IA faz" data-short>
       <p class="eyebrow"><span class="story">H4</span>Quebra de meta com IA</p>
       <h2>O que a IA faz: transforma uma meta vaga em passos com data</h2>
       <div class="io">
@@ -710,7 +711,7 @@
     </section>
 
     <!-- 13 -->
-    <section class="slide" aria-label="Revisão antes de salvar">
+    <section class="slide" aria-label="Revisão antes de salvar" data-short>
       <p class="eyebrow"><span class="story">H4</span>Revisão antes de salvar</p>
       <h2>Nada é gravado até “Adicionar ao projeto”</h2>
       <div class="shots">
@@ -730,7 +731,7 @@
     </section>
 
     <!-- 14 -->
-    <section class="slide" aria-label="IA sem chave cadastrada">
+    <section class="slide" aria-label="IA sem chave cadastrada" data-short>
       <div class="split">
         <div class="text">
           <p class="eyebrow"><span class="story">H4</span>Sem chave cadastrada</p>
@@ -864,7 +865,49 @@
     </section>
 
     <!-- 20 -->
-    <section class="slide" aria-label="Como rodar">
+    <section class="slide" data-short data-only="curta" aria-label="Segurança e qualidade">
+      <p class="eyebrow">Constituição na prática</p>
+      <h2>Regras verificáveis, testadas a cada push</h2>
+      <div class="guarantees">
+        <div class="guarantee"><b>Toda rota de dados exige login</b><span>teste percorre todas as rotas sem token e espera 401</span></div>
+        <div class="guarantee"><b>Ninguém vê dado de outra pessoa</b><span>ler, editar ou excluir dado alheio responde 404</span></div>
+        <div class="guarantee"><b>A chave da IA nunca chega ao navegador</b><span>o status responde só verdadeiro ou falso</span></div>
+        <div class="guarantee"><b>Descrições e metas fora dos logs</b><span>testes capturam os logs e procuram o texto sensível</span></div>
+        <div class="guarantee"><b>Senha só com hash do Django</b><span>teste confere que a senha gravada não é o texto digitado</span></div>
+        <div class="guarantee"><b>A IA nunca grava sozinha</b><span>pedir sugestões não cria nenhuma tarefa</span></div>
+      </div>
+      <div class="numbers">
+        <div class="number"><b>100</b><span>testes da API, com a IA sempre simulada</span></div>
+        <div class="number"><b>78</b><span>testes do frontend, simulando cliques e digitação</span></div>
+        <div class="number"><b>24</b><span>verificações no navegador real, história por história</span></div>
+      </div>
+      <p class="small soft">GitHub Actions roda tudo numa máquina limpa a cada push. Os testes acharam quatro bugs reais, entre eles o painel de IA cobrindo o botão “Adicionar” e um erro que sumia antes de ser lido.</p>
+    </section>
+
+    <section class="slide" data-short data-only="curta" aria-label="O que mudou e o que ficou de fora">
+      <div class="split even">
+        <div class="text">
+          <p class="eyebrow">Spec viva · RELATO.md</p>
+          <h2>O que mudou durante a implementação</h2>
+          <ul class="points">
+            <li><strong>Constituição emendada:</strong> renovar token passou a ser exceção à regra de login, porque o refresh token já é uma credencial.</li>
+            <li><strong>“Modal” virou painel lateral:</strong> um modal travaria a tela, contrariando o requisito de desempenho.</li>
+            <li><strong>Aviso de chave não cadastrada:</strong> antes, sem chave, aparecia a mesma mensagem genérica de falha.</li>
+          </ul>
+        </div>
+        <div class="text">
+          <p class="eyebrow">Com honestidade</p>
+          <h2>O que ficou de fora</h2>
+          <ul class="points">
+            <li><strong>A chamada real ao Claude não foi exercitada:</strong> não havia chave. O caminho sem chave está testado de ponta a ponta; o de sucesso, com respostas simuladas.</li>
+            <li><strong>F5 exige novo login:</strong> consequência da regra de não guardar token em lugar nenhum.</li>
+            <li><strong>Só configuração de desenvolvimento:</strong> não há deploy nem Postgres.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" aria-label="Como rodar" data-short>
       <div class="split even">
         <div class="text">
           <p class="eyebrow">Para testar</p>

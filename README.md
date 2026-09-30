@@ -3,7 +3,7 @@
 Painel pessoal para quem toca vários projetos ao mesmo tempo. Ele junta as pendências de todos numa visão ordenada por prazo, oferece um kanban por projeto e usa IA (Claude, da Anthropic) para quebrar uma meta grande em subtarefas com prazos sugeridos. Nada sugerido pela IA é salvo sem a revisão do usuário.
 
 **Stack:** Django 6.1 + Django REST Framework + SQLite · React 19 + Vite 8 · API da Anthropic
-**Apresentação (23 slides com telas reais):** [`docs/apresentacao/apresentacao-completa.html`](docs/apresentacao/apresentacao-completa.html) — arquivo único, com as imagens embutidas: baixe só ele e abra no navegador. Navegue com as setas do teclado; o botão "Ver todos" mostra tudo numa página. Para editar os slides, use [`index.html`](docs/apresentacao/index.html) (usa a pasta `img/`) e rode `node docs/apresentacao/build-offline.mjs` para regerar o arquivo único.
+**Apresentação (12 slides, versão curta):** [`docs/apresentacao/apresentacao-curta.html`](docs/apresentacao/apresentacao-curta.html) — o essencial, do problema à IA. A versão longa, com 23 slides, é [`apresentacao-completa.html`](docs/apresentacao/apresentacao-completa.html) — arquivo único, com as imagens embutidas: baixe só ele e abra no navegador. Navegue com as setas do teclado; o botão "Ver todos" mostra tudo numa página. Para editar os slides, use [`index.html`](docs/apresentacao/index.html) (usa a pasta `img/`) e rode `node docs/apresentacao/build-offline.mjs` para regerar o arquivo único.
 
 ## Sumário
 
@@ -300,8 +300,9 @@ e2e/
   capture-screens.mjs       gera as capturas da apresentação
 docs/apresentacao/
   index.html                slides (usa a pasta img/) — arquivo que se edita
-  apresentacao-completa.html  mesmo conteúdo num arquivo só, imagens embutidas
-  build-offline.mjs         gera o arquivo único a partir do index.html
+  apresentacao-curta.html     12 slides, arquivo único, imagens embutidas
+  apresentacao-completa.html  23 slides, arquivo único, imagens embutidas
+  build-offline.mjs         gera as duas versões a partir do index.html
   img/                      capturas de tela usadas nos slides
 .github/workflows/ci.yml    integração contínua
 ```
