@@ -800,7 +800,6 @@
       <p class="eyebrow">Spec viva · registrado em RELATO.md</p>
       <h2>O que mudou durante a implementação</h2>
       <ul class="changes">
-        <li><span class="where">constituição</span><b>Renovação de token liberada sem login</b><p>Ela exige o refresh token, que já é uma credencial.</p></li>
         <li><span class="where">spec H6</span><b>F5 pede login</b><p>Consequência de não guardar token em lugar nenhum.</p></li>
         <li><span class="where">plano</span><b>CORS trocado por proxy do Vite</b><p>Uma dependência a menos, mesmo resultado.</p></li>
         <li><span class="where">plano</span><b>“Modal” virou painel lateral</b><p>Um modal travaria a tela, contrariando o requisito de desempenho.</p></li>
@@ -840,7 +839,6 @@
         <li><strong>A chamada real ao Claude não foi exercitada.</strong> Não havia chave durante o desenvolvimento. O caminho sem chave foi testado de ponta a ponta. O caminho com sugestões foi testado com respostas simuladas no formato que o código exige. É o primeiro ponto a validar com uma chave.</li>
         <li><strong>F5 exige novo login.</strong> Sessão persistente exigiria emendar a constituição (por exemplo, cookie HttpOnly).</li>
         <li><strong>A ordem dentro da coluna do kanban é sempre por prazo.</strong> Não há reordenação manual.</li>
-        <li><strong>Configuração só de desenvolvimento:</strong> não há deploy, Postgres nem servidor de arquivos estáticos.</li>
         <li><strong>As sugestões da IA não são reprodutíveis:</strong> um modelo de linguagem responde diferente a cada chamada. Por isso nenhum teste depende delas.</li>
       </ul>
     </section>
