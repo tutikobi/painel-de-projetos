@@ -648,7 +648,6 @@
           <p class="eyebrow">Spec viva · RELATO.md</p>
           <h2>O que mudou durante a implementação</h2>
           <ul class="points">
-            <li><strong>Constituição emendada:</strong> renovar token passou a ser exceção à regra de login, porque o refresh token já é uma credencial.</li>
             <li><strong>“Modal” virou painel lateral:</strong> um modal travaria a tela, contrariando o requisito de desempenho.</li>
             <li><strong>Aviso de chave não cadastrada:</strong> antes, sem chave, aparecia a mesma mensagem genérica de falha.</li>
           </ul>
@@ -659,7 +658,6 @@
           <ul class="points">
             <li><strong>A chamada real ao Claude não foi exercitada:</strong> não havia chave. O caminho sem chave está testado de ponta a ponta; o de sucesso, com respostas simuladas.</li>
             <li><strong>F5 exige novo login:</strong> consequência da regra de não guardar token em lugar nenhum.</li>
-            <li><strong>Só configuração de desenvolvimento:</strong> não há deploy nem Postgres.</li>
           </ul>
         </div>
       </div>
