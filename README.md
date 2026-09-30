@@ -3,7 +3,7 @@
 Painel pessoal para quem toca vários projetos ao mesmo tempo. Ele junta as pendências de todos numa visão ordenada por prazo, oferece um kanban por projeto e usa IA (Claude, da Anthropic) para quebrar uma meta grande em subtarefas com prazos sugeridos. Nada sugerido pela IA é salvo sem a revisão do usuário.
 
 **Stack:** Django 6.1 + Django REST Framework + SQLite · React 19 + Vite 8 · API da Anthropic
-**Apresentação com todas as telas:** [`docs/apresentacao/index.html`](docs/apresentacao/index.html) (baixe o repositório e abra no navegador; use as setas do teclado)
+**Apresentação (23 slides com telas reais):** [`docs/apresentacao/apresentacao-completa.html`](docs/apresentacao/apresentacao-completa.html) — arquivo único, com as imagens embutidas: baixe só ele e abra no navegador. Navegue com as setas do teclado; o botão "Ver todos" mostra tudo numa página. Para editar os slides, use [`index.html`](docs/apresentacao/index.html) (usa a pasta `img/`) e rode `node docs/apresentacao/build-offline.mjs` para regerar o arquivo único.
 
 ## Sumário
 
@@ -298,7 +298,11 @@ frontend/src/
 e2e/
   acceptance.mjs            roteiro de aceitação no navegador
   capture-screens.mjs       gera as capturas da apresentação
-docs/apresentacao/          slides (index.html) e capturas de tela
+docs/apresentacao/
+  index.html                slides (usa a pasta img/) — arquivo que se edita
+  apresentacao-completa.html  mesmo conteúdo num arquivo só, imagens embutidas
+  build-offline.mjs         gera o arquivo único a partir do index.html
+  img/                      capturas de tela usadas nos slides
 .github/workflows/ci.yml    integração contínua
 ```
 

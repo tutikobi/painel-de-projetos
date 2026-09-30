@@ -410,7 +410,7 @@
   <div class="brand">Painel de Projetos <span>apresentação</span></div>
   <div class="controls">
     <button type="button" id="prev" aria-label="Slide anterior">←</button>
-    <span class="counter" id="counter" aria-live="polite">1 / 20</span>
+    <span class="counter" id="counter" aria-live="polite">1 / 23</span>
     <button type="button" id="next" aria-label="Próximo slide">→</button>
     <button type="button" id="mode">Ver todos</button>
   </div>
@@ -457,7 +457,6 @@
         </div>
       </div>
       <p class="soft small">Fora de escopo, por decisão: colaboração multiusuário, e-mail/push, calendário externo, anexos, relatórios.</p>
-      <span class="slide-num">02 / 20</span>
     </section>
 
     <!-- 3 -->
@@ -474,7 +473,25 @@
         <li><span class="file">RELATO.md</span><span class="what">o que mudou e por quê</span></li>
       </ol>
       <p class="rule-note"><strong>Regra que guiou o trabalho:</strong> mudou de ideia no meio da implementação? A spec e o plano são atualizados <em>antes</em> do código. Nada de ajuste silencioso. A revisão crítica dos artefatos está em <code>ANALISE.md</code>.</p>
-      <span class="slide-num">03 / 20</span>
+    </section>
+
+    <section class="slide" aria-label="O que tem dentro de cada artefato">
+      <p class="eyebrow">Os artefatos, por dentro</p>
+      <h2>Cada arquivo responde a uma pergunta diferente</h2>
+      <div class="outcomes-wrap">
+        <table class="outcomes">
+          <thead><tr><th>Arquivo</th><th>Pergunta que responde</th><th>O que tem dentro</th></tr></thead>
+          <tbody>
+            <tr><td class="code">00_prompt-inicial.md</td><td>O que eu quero?</td><td>O rascunho antes de qualquer formalização: problema, funcionalidades desejadas, stack e o que não é necessário agora</td></tr>
+            <tr><td class="code">constitution.md</td><td>O que nunca pode ser violado?</td><td>Seis grupos de princípios: stack, segurança e privacidade, papel da IA, padrões de código e teste, escopo de uso e ponto de verificação</td></tr>
+            <tr><td class="code">spec.md</td><td>O quê e por quê?</td><td>Seis histórias com critérios de aceitação, quatro requisitos não funcionais, oito casos extremos, fora de escopo e duas suposições</td></tr>
+            <tr><td class="code">plan.md</td><td>Como?</td><td>Arquitetura, modelo de dados, autenticação, 13 rotas da API, serviço de IA, organização do frontend e a justificativa de cada dependência</td></tr>
+            <tr><td class="code">tasks.md</td><td>Em que ordem?</td><td>28 tarefas, cada uma apontando para a história que implementa</td></tr>
+            <tr><td class="code">ANALISE.md</td><td>Os artefatos se sustentam?</td><td>A revisão crítica dos próprios artefatos, feita antes de implementar</td></tr>
+            <tr><td class="code">RELATO.md</td><td>O que mudou e por quê?</td><td>O que foi entregue, o que ficou de fora e as mudanças nos artefatos durante a implementação</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- 4 -->
@@ -512,7 +529,6 @@
         <p class="fact"><b>Cada usuário vê só o que é seu</b>Todas as consultas filtram pelo usuário logado.</p>
         <p class="fact"><b>IA é complemento</b>Sem ela, todo o resto continua funcionando.</p>
       </div>
-      <span class="slide-num">04 / 20</span>
     </section>
 
     <!-- 5 -->
@@ -539,7 +555,6 @@
           </figure>
         </div>
       </div>
-      <span class="slide-num">05 / 20</span>
     </section>
 
     <!-- 6 -->
@@ -560,7 +575,6 @@
           <img src="img/04-novo-projeto-e-tarefa.png" alt="Formulário de novo projeto aberto na barra lateral">
         </figure>
       </div>
-      <span class="slide-num">06 / 20</span>
     </section>
 
     <!-- 7 -->
@@ -581,7 +595,6 @@
           <img src="img/03-pendencias.png" alt="Pendências separadas em atrasadas e com prazo">
         </figure>
       </div>
-      <span class="slide-num">07 / 20</span>
     </section>
 
     <!-- 8 -->
@@ -602,7 +615,6 @@
           <img src="img/05-editar-tarefa.png" alt="Tarefa em modo de edição com campos de título, prazo e projeto">
         </figure>
       </div>
-      <span class="slide-num">08 / 20</span>
     </section>
 
     <!-- 9 -->
@@ -624,7 +636,6 @@
           <img src="img/06-kanban.png" alt="Kanban do projeto TCC com três colunas">
         </figure>
       </div>
-      <span class="slide-num">09 / 20</span>
     </section>
 
     <!-- 10 -->
@@ -656,7 +667,6 @@
         <div>“Até dia 30” = a próxima vez que o dia 30 chegar.</div>
         <div>Meta sem prazo → subtarefas <strong>sem data</strong>. A IA não inventa datas.</div>
       </div>
-      <span class="slide-num">10 / 20</span>
     </section>
 
     <!-- 11 -->
@@ -677,7 +687,6 @@
           <li><b>“Adicionar ao projeto” grava</b><span>só agora as tarefas entram no banco, com o selo IA</span></li>
         </ol>
       </div>
-      <span class="slide-num">11 / 20</span>
     </section>
 
     <!-- 12 -->
@@ -698,7 +707,6 @@
         <li>Enquanto espera, dá para continuar usando o kanban e criar tarefas: o painel abre espaço na página em vez de cobri-la.</li>
         <li><strong>Cancelar</strong> descarta a espera. <span class="soft">A chamada já iniciada no servidor termina e não grava nada.</span></li>
       </ul>
-      <span class="slide-num">12 / 20</span>
     </section>
 
     <!-- 13 -->
@@ -719,7 +727,6 @@
         <li>Cada sugestão tem título e prazo editáveis, além de <strong>Remover</strong>. Também há <strong>+ Adicionar subtarefa</strong> e <strong>Descartar sugestão</strong>.</li>
         <li>No exemplo, a primeira sugestão foi removida: só as outras cinco entraram no kanban, com o selo <span class="pill neutral">IA</span>.</li>
       </ul>
-      <span class="slide-num">13 / 20</span>
     </section>
 
     <!-- 14 -->
@@ -746,7 +753,6 @@
           <img src="img/07-ia-sem-chave.png" alt="Painel de IA com aviso amarelo de chave não cadastrada">
         </figure>
       </div>
-      <span class="slide-num">14 / 20</span>
     </section>
 
     <!-- 15 -->
@@ -771,7 +777,6 @@
           <img src="img/12-celular.png" alt="Tela de pendências em largura de celular">
         </figure>
       </div>
-      <span class="slide-num">15 / 20</span>
     </section>
 
     <!-- 16 -->
@@ -786,7 +791,6 @@
         <div class="guarantee"><b>Senha só com hash do Django</b><span>teste confere que a senha gravada não é o texto digitado</span></div>
         <div class="guarantee"><b>Nenhum token salvo em texto plano</b><span>tokens só em memória; o roteiro no navegador confere que F5 pede login</span></div>
       </div>
-      <span class="slide-num">16 / 20</span>
     </section>
 
     <!-- 17 -->
@@ -806,7 +810,6 @@
         <li>Sem chave, o SDK da Anthropic gerava erro 500 em vez de um aviso tratado.</li>
         <li>Na revisão da IA, títulos longos ficavam cortados no painel estreito.</li>
       </ul>
-      <span class="slide-num">17 / 20</span>
     </section>
 
     <!-- 18 -->
@@ -821,7 +824,30 @@
         <li><span class="where">spec</span><b>Aviso de chave não cadastrada</b><p>Antes, sem chave, aparecia a mesma mensagem genérica de falha.</p></li>
         <li><span class="where">tarefas</span><b>T2.7 e T2.8 adicionadas</b><p>Nenhuma tarefa de frontend cobria H1 e H5.</p></li>
       </ul>
-      <span class="slide-num">18 / 20</span>
+    </section>
+
+    <section class="slide" aria-label="Decisões e por quê">
+      <p class="eyebrow">Decisões técnicas</p>
+      <h2>Cada escolha tem um motivo escrito</h2>
+      <ul class="changes">
+        <li><span class="where">spec H4</span><b>Sugerir e gravar são dois endpoints</b><p>É o servidor, e não o frontend, que garante que nada é salvo sem confirmação.</p></li>
+        <li><span class="where">constituição</span><b>A resposta da IA é validada mesmo vindo em JSON</b><p>O modelo pode recusar, cortar a resposta ou mandar data inválida. Desvio vira erro, nunca tarefa.</p></li>
+        <li><span class="where">constituição</span><b>Tokens só na memória</b><p>Nenhum token em texto plano em lugar nenhum. O custo, F5 pedir login, está escrito na spec.</p></li>
+        <li><span class="where">plano</span><b>Proxy do Vite no lugar de CORS</b><p>Mesmo resultado em desenvolvimento, com uma dependência a menos.</p></li>
+        <li><span class="where">spec H2</span><b>Uma única chamada para a visão central</b><p>A API já devolve nome e cor do projeto junto da tarefa.</p></li>
+        <li><span class="where">constituição</span><b>SQLite, usando só recursos padrão do ORM</b><p>Para trocar por Postgres sem mudar o modelo de dados.</p></li>
+      </ul>
+    </section>
+
+    <section class="slide" aria-label="Perguntas frequentes">
+      <p class="eyebrow">Perguntas frequentes</p>
+      <h2>O que costumam perguntar sobre a IA</h2>
+      <ul class="points">
+        <li><strong>A IA pode criar tarefa sozinha?</strong> Não. Um endpoint só sugere e não grava; o outro grava a lista que a pessoa revisou. Há teste garantindo que pedir sugestões não cria tarefa.</li>
+        <li><strong>E se a IA responder besteira?</strong> O backend valida chaves, quantidade de itens, títulos e datas. Qualquer desvio vira erro tratado e nada é salvo. Dez testes cobrem respostas malformadas.</li>
+        <li><strong>A chave da API fica segura?</strong> Fica só em variável de ambiente do backend. O endpoint de status responde apenas verdadeiro ou falso, e há teste conferindo que o valor não aparece na resposta.</li>
+        <li><strong>O que muda com spec-driven?</strong> As decisões difíceis vieram antes: o que acontece quando a IA falha, quem vê o quê, o que fica fora de escopo. E cada mudança de ideia ficou registrada com o motivo.</li>
+      </ul>
     </section>
 
     <!-- 19 -->
@@ -835,7 +861,6 @@
         <li><strong>Configuração só de desenvolvimento:</strong> não há deploy, Postgres nem servidor de arquivos estáticos.</li>
         <li><strong>As sugestões da IA não são reprodutíveis:</strong> um modelo de linguagem responde diferente a cada chamada. Por isso nenhum teste depende delas.</li>
       </ul>
-      <span class="slide-num">19 / 20</span>
     </section>
 
     <!-- 20 -->
@@ -846,7 +871,8 @@
           <h2>Dois terminais e um usuário pronto</h2>
           <p class="creds"><span>Usuário <code>demo</code></span><span>Senha <code>Painel-demo-2026</code></span></p>
           <p class="small soft"><code>seed_demo</code> cria 3 projetos e 12 tarefas com prazos relativos ao dia de hoje: sempre há atrasadas, próximas, sem prazo e vindas de IA.</p>
-          <p class="small">Requisitos: Python 3.12+, Node.js 22.22.2+ ou 24.15+, Git. Chave da Anthropic é opcional.</p>
+          <p class="small">Requisitos: Python 3.12+, Node.js 22.22.2+ ou 24.15+, Git. Chave da Anthropic é opcional: sem ela, só a geração de sugestões fica indisponível.</p>
+          <p class="small"><strong>Os dois terminais ficam abertos enquanto o sistema roda.</strong> Só com o frontend a tela abre, mas o login falha.</p>
           <p class="small">Passo a passo completo, roteiro de teste manual e solução de problemas no <code>README.md</code>:<br><a href="https://github.com/tutikobi/painel-de-projetos">github.com/tutikobi/painel-de-projetos</a></p>
         </div>
         <div class="text">
@@ -865,7 +891,6 @@ npm run dev
 <span class="c"># abrir http://localhost:5173</span></pre>
         </div>
       </div>
-      <span class="slide-num">20 / 20</span>
     </section>
 
   </div>
@@ -887,6 +912,14 @@ npm run dev
       var n = parseInt((location.hash || "").replace("#", ""), 10);
       return n >= 1 && n <= total ? n - 1 : 0;
     }
+
+    slides.forEach(function (slide, i) {
+      if (i === 0) return; // a capa não recebe número
+      var tag = document.createElement("span");
+      tag.className = "slide-num";
+      tag.textContent = String(i + 1).padStart(2, "0") + " / " + total;
+      slide.appendChild(tag);
+    });
 
     function render() {
       slides.forEach(function (slide, i) {
